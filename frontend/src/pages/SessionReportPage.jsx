@@ -973,11 +973,17 @@ function IdentityItem({ item }) {
           {item.label}
         </p>
 
-        <h4 className="mt-1 line-clamp-1 text-sm font-extrabold leading-5 text-slate-950">
+        <h4
+          className="mt-1 line-clamp-1 text-sm font-extrabold leading-5 text-slate-950"
+          title={item.value || "-"}
+        >
           {item.value || "-"}
         </h4>
 
-        <p className="mt-1 line-clamp-1 text-xs font-semibold leading-5 text-slate-500">
+        <p
+          className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-slate-500"
+          title={item.subValue || "-"}
+        >
           {item.subValue || "-"}
         </p>
       </div>

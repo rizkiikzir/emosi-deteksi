@@ -111,6 +111,29 @@ const getMonitoringProgressKey = (sessionId) => {
   return `monitoringProgress:${sessionId}`;
 };
 
+const isInvalidText = (value) => {
+  const text = String(value || "").trim();
+
+  return (
+    !text ||
+    text === "-" ||
+    text.toLowerCase() === "undefined" ||
+    text.toLowerCase() === "null" ||
+    text.toLowerCase() === "belum ada mahasiswa"
+  );
+};
+
+const isValidMonitoringSession = (session) => {
+  if (!session) return false;
+
+  return (
+    !isInvalidText(session.sessionId || session.id) &&
+    !isInvalidText(session.studentName) &&
+    !isInvalidText(session.nim) &&
+    !isInvalidText(session.topic)
+  );
+};
+
 function MonitoringPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -153,8 +176,11 @@ function MonitoringPage() {
       return normalizeSessionInfo(sessionFromRoute);
     }
 
-    return getSavedSessionInfo() || DEFAULT_SESSION_INFO;
+    return getSavedSessionInfo();
   });
+
+  const hasValidSession = isValidMonitoringSession(sessionInfo);
+
   const [durationTick, setDurationTick] = useState(0);
 
   useEffect(() => {
@@ -332,6 +358,12 @@ function MonitoringPage() {
   };
 
   const startCamera = async () => {
+    if (!hasValidSession) {
+      alert("Sesi tidak valid. Buat sesi konseling terlebih dahulu.");
+      navigate("/sesi-konseling", { replace: true });
+      return;
+    }
+
     try {
       if (videoRef.current?.srcObject) {
         videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
@@ -365,13 +397,27 @@ function MonitoringPage() {
 
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
     }
 
     setIsCameraOn(false);
     setIsMonitoring(false);
     setFaceBox(null);
   };
+
+  useEffect(() => {
+    if (!hasValidSession) {
+      stopCamera();
+      localStorage.removeItem("currentCounselingSession");
+
+      alert("Tidak ada sesi konseling aktif. Buat sesi terlebih dahulu.");
+      navigate("/sesi-konseling", { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasValidSession, navigate]);
 
   const resetMonitoring = () => {
     secondCounterRef.current = 0;
@@ -633,6 +679,14 @@ function MonitoringPage() {
   const finishSession = () => {
     setIsMonitoring(false);
 
+    if (!hasValidSession) {
+      alert("Data sesi tidak lengkap. Laporan tidak bisa dibuat.");
+      stopCamera();
+      localStorage.removeItem("currentCounselingSession");
+      navigate("/sesi-konseling", { replace: true });
+      return;
+    }
+
     if (chartPoints.length === 0) {
       alert("Belum ada data deteksi untuk dibuat laporan.");
       return;
@@ -692,6 +746,14 @@ function MonitoringPage() {
   };
 
   const captureAndPredict = async () => {
+    if (!hasValidSession) {
+      setIsMonitoring(false);
+      stopCamera();
+      localStorage.removeItem("currentCounselingSession");
+      navigate("/sesi-konseling", { replace: true });
+      return;
+    }
+
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -911,6 +973,10 @@ function MonitoringPage() {
     ? `${frameSize.width} x ${frameSize.height}`
     : "-";
 
+  if (!hasValidSession) {
+    return null;
+  }
+
   return (
     <AppLayout
       title="Monitoring Emosi Real-Time"
@@ -995,7 +1061,15 @@ function MonitoringPage() {
           <div className="grid grid-cols-3 gap-3">
             <button
               type="button"
-              onClick={() => setIsMonitoring((prev) => !prev)}
+              onClick={() => {
+                if (!hasValidSession) {
+                  alert("Sesi tidak valid. Buat sesi konseling terlebih dahulu.");
+                  navigate("/sesi-konseling", { replace: true });
+                  return;
+                }
+
+                setIsMonitoring((prev) => !prev);
+              }}
               disabled={!isCameraOn}
               className="rounded-2xl border border-indigo-100 bg-white px-5 py-4 text-sm font-extrabold text-indigo-600 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-45"
             >
