@@ -1,0 +1,35 @@
+# Python virtual environment
+venv/
+.venv/
+backend/venv/
+backend/.venv/
+**/venv/
+**/.venv/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Model / dataset / archive
+*.h5
+*.keras
+*.pkl
+*.joblib
+dataset/
+dataset_custom/
+*.zip
+*.rar
+*.7z
+
+# Node
+node_modules/
+**/node_modules/
+dist/
+dist-ssr/
+.vite/
+
+# Env
+.env
+.env.local
+.env.*.local
