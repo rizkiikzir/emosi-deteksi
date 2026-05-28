@@ -1,12 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
+import { getEmotionIcon } from "../utils/emotionIcons";
 import {
   ArrowLeft,
   BarChart3,
   BookOpen,
   Brain,
   CalendarDays,
-  CheckCircle2,
   FileText,
   GraduationCap,
   Info,
@@ -18,7 +18,6 @@ import {
 
 const emotionMeta = {
   Senang: {
-    icon: "😊",
     bg: "bg-emerald-50",
     text: "text-emerald-700",
     border: "border-emerald-200",
@@ -26,7 +25,6 @@ const emotionMeta = {
     glow: "shadow-[0_14px_30px_rgba(16,185,129,0.12)]",
   },
   Sedih: {
-    icon: "😟",
     bg: "bg-blue-50",
     text: "text-blue-700",
     border: "border-blue-200",
@@ -34,7 +32,6 @@ const emotionMeta = {
     glow: "shadow-[0_14px_30px_rgba(37,99,235,0.12)]",
   },
   Marah: {
-    icon: "😠",
     bg: "bg-rose-50",
     text: "text-rose-700",
     border: "border-rose-200",
@@ -42,7 +39,6 @@ const emotionMeta = {
     glow: "shadow-[0_14px_30px_rgba(244,63,94,0.12)]",
   },
   Takut: {
-    icon: "😨",
     bg: "bg-amber-50",
     text: "text-amber-700",
     border: "border-amber-200",
@@ -50,12 +46,18 @@ const emotionMeta = {
     glow: "shadow-[0_14px_30px_rgba(245,158,11,0.12)]",
   },
   Netral: {
-    icon: "😐",
     bg: "bg-slate-100",
     text: "text-slate-700",
     border: "border-slate-200",
     activeBg: "bg-slate-50",
     glow: "shadow-[0_14px_30px_rgba(100,116,139,0.10)]",
+  },
+  Seri: {
+    bg: "bg-indigo-50",
+    text: "text-indigo-700",
+    border: "border-indigo-200",
+    activeBg: "bg-indigo-50",
+    glow: "shadow-[0_14px_30px_rgba(91,79,233,0.12)]",
   },
 };
 
@@ -220,13 +222,17 @@ function ReportDetailPage() {
                     >
                       <div
                         className={[
-                          "mx-auto flex h-11 w-11 items-center justify-center rounded-2xl text-xl ring-1",
+                          "mx-auto flex h-12 w-12 items-center justify-center rounded-2xl ring-1",
                           isDominant
                             ? "bg-white ring-white shadow-sm"
                             : `${meta.bg} ring-slate-100`,
                         ].join(" ")}
                       >
-                        {meta.icon}
+                        <img
+                          src={getEmotionIcon(emotion)}
+                          alt={emotion}
+                          className="h-10 w-10 object-contain"
+                        />
                       </div>
 
                       <p
@@ -273,8 +279,12 @@ function ReportDetailPage() {
                   ].join(" ")}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
-                      {dominantMeta.icon}
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                      <img
+                        src={getEmotionIcon(dominantMain)}
+                        alt={dominantMain}
+                        className="h-11 w-11 object-contain"
+                      />
                     </div>
 
                     <div className="min-w-0">

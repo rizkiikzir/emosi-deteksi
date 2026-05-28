@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
+import { getEmotionIcon } from "../utils/emotionIcons";
 import {
   Users,
   CalendarDays,
@@ -375,8 +376,12 @@ function DashboardPage() {
               </h3>
 
               <div className="mt-4 flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-teal-100 bg-white text-3xl shadow-sm">
-                  {EMOTION_EMOJI[dominantEmotion] || "😐"}
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-teal-100">
+                  <img
+                    src={getEmotionIcon(dominantEmotion)}
+                    alt={dominantEmotion}
+                    className="h-13 w-13 object-contain"
+                  />
                 </div>
 
                 <div>
@@ -541,13 +546,32 @@ function DonutChart({ distribution, total }) {
 
 function DistributionRow({ item }) {
   return (
-    <div className="grid grid-cols-[16px_1fr_auto] items-center gap-3 rounded-2xl bg-slate-50/80 px-3 py-2.5 text-sm">
-      <span
-        className="h-3 w-3 rounded shadow-sm"
-        style={{ backgroundColor: EMOTION_COLORS[item.name] }}
-      />
-      <p className="font-bold text-slate-700">{item.name}</p>
-      <p className="font-extrabold text-slate-950">
+    <div className="grid grid-cols-[34px_1fr_auto] items-center gap-3 rounded-2xl bg-slate-50/80 px-3 py-2.5 text-sm transition hover:bg-white hover:shadow-sm">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+        <img
+          src={getEmotionIcon(item.name)}
+          alt={item.name}
+          className="h-9 w-9 object-contain"
+        />
+      </div>
+
+      <div className="min-w-0">
+        <p className="font-extrabold text-slate-700">{item.name}</p>
+        <div
+          className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-200"
+          aria-hidden="true"
+        >
+          <div
+            className="h-full rounded-full opacity-90"
+            style={{
+              width: `${item.value}%`,
+              backgroundColor: EMOTION_COLORS[item.name],
+            }}
+          />
+        </div>
+      </div>
+
+      <p className="text-right font-extrabold text-slate-950">
         {item.value}%{" "}
         <span className="font-bold text-slate-600">
           ({formatNumber(item.count)})

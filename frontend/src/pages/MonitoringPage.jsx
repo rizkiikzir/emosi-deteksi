@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import { getEmotionIcon } from "../utils/emotionIcons";
 import AppLayout from "../components/AppLayout";
 
 import {
@@ -131,6 +131,18 @@ const isValidMonitoringSession = (session) => {
     !isInvalidText(session.studentName) &&
     !isInvalidText(session.nim) &&
     !isInvalidText(session.topic)
+  );
+};
+
+const EMOTION_ORDER = ["Senang", "Sedih", "Marah", "Takut", "Netral"];
+
+const getPrimaryEmotion = (value) => {
+  const text = String(value || "").toLowerCase();
+
+  return (
+    EMOTION_ORDER.find((emotion) =>
+      text.includes(emotion.toLowerCase())
+    ) || "Netral"
   );
 };
 
@@ -290,7 +302,7 @@ function MonitoringPage() {
     Senang: 4,
   };
 
-  const emotionOrder = ["Senang", "Sedih", "Marah", "Takut", "Netral"];
+  const emotionOrder = EMOTION_ORDER;
 
   const scatterEmotionOrder = ["Marah", "Sedih", "Takut", "Netral", "Senang"];
 
@@ -300,14 +312,6 @@ function MonitoringPage() {
     Marah: "#ef4444",
     Takut: "#f59e0b",
     Netral: "#6b7280",
-  };
-
-  const emotionIcon = {
-    Senang: "😊",
-    Sedih: "😟",
-    Marah: "😠",
-    Takut: "😨",
-    Netral: "😐",
   };
 
   const formatSecondToTime = (second) => {
@@ -1000,9 +1004,9 @@ function MonitoringPage() {
             isCameraOn={isCameraOn}
             currentEmotion={currentEmotion}
             confidence={confidence}
-            emotionIcon={emotionIcon}
             faceBox={faceBox}
             frameSize={frameSize}
+            isMonitoring={isMonitoring}
             startCamera={startCamera}
             stopCamera={stopCamera}
             resetMonitoring={resetMonitoring}
@@ -1014,7 +1018,6 @@ function MonitoringPage() {
             dominantEmotion={dominantEmotion}
             confidence={confidence}
             statusText={statusText}
-            emotionIcon={emotionIcon}
             totalDetected={totalDetected}
             resolutionText={resolutionText}
             counts={counts}
@@ -1030,7 +1033,6 @@ function MonitoringPage() {
             logs={logs}
             emotionOrder={emotionOrder}
             emotionColors={emotionColors}
-            emotionIcon={emotionIcon}
           />
         </section>
 
@@ -1165,9 +1167,9 @@ function CameraPanel({
   isCameraOn,
   currentEmotion,
   confidence,
-  emotionIcon,
   faceBox,
   frameSize,
+  isMonitoring,
   startCamera,
   stopCamera,
   resetMonitoring,
@@ -1242,7 +1244,17 @@ function CameraPanel({
             Emosi Terdeteksi
           </p>
           <div className="mt-1 flex items-center gap-3">
-            <span className="text-3xl">{emotionIcon[currentEmotion] || "•"}</span>
+            {currentEmotion && currentEmotion !== "-" ? (
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
+                <img
+                  src={getEmotionIcon(currentEmotion)}
+                  alt={currentEmotion}
+                  className="h-8 w-8 object-contain"
+                />
+              </div>
+            ) : (
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-400" />
+            )}
             <h2 className="text-2xl font-extrabold text-slate-950">
               {currentEmotion}
             </h2>
@@ -1271,7 +1283,7 @@ function CameraPanel({
           variant="primary"
         >
           <Activity size={16} />
-          Mulai Deteksi
+          {isMonitoring ? "Deteksi Berjalan" : "Mulai Deteksi"}
         </ActionButton>
 
         <ActionButton onClick={resetMonitoring} variant="light">
@@ -1292,7 +1304,6 @@ function MiddlePanel({
   logs,
   emotionOrder,
   emotionColors,
-  emotionIcon,
 }) {
   return (
     <div className="grid grid-cols-2 gap-5">
@@ -1305,15 +1316,16 @@ function MiddlePanel({
           {emotionOrder.map((emotion) => (
             <div
               key={emotion}
-              className="grid grid-cols-[92px_minmax(0,1fr)_48px] items-center gap-3"
+              className="grid grid-cols-[112px_minmax(0,1fr)_48px] items-center gap-3"
             >
               <div className="flex items-center gap-2">
-                <span
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-sm text-white"
-                  style={{ backgroundColor: emotionColors[emotion] }}
-                >
-                  {emotionIcon[emotion]}
-                </span>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
+                  <img
+                    src={getEmotionIcon(emotion)}
+                    alt={emotion}
+                    className="h-7 w-7 object-contain"
+                  />
+                </div>
                 <span className="text-sm font-bold text-slate-700">
                   {emotion}
                 </span>
@@ -1392,7 +1404,6 @@ function RightPanel({
   currentEmotion,
   dominantEmotion,
   statusText,
-  emotionIcon,
   totalDetected,
   resolutionText,
   counts,
@@ -1400,6 +1411,11 @@ function RightPanel({
   emotionColors,
   distributionData,
 }) {
+  const dominantIconEmotion =
+    dominantEmotion && dominantEmotion !== "-"
+      ? getPrimaryEmotion(dominantEmotion)
+      : currentEmotion;
+
   return (
     <aside className="space-y-5">
       <div className="rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
@@ -1408,8 +1424,16 @@ function RightPanel({
         </h3>
 
         <div className="mt-5 flex items-center gap-4 border-b border-slate-100 pb-5">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-slate-200 text-3xl">
-            {emotionIcon[currentEmotion] || "•"}
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+            {dominantIconEmotion && dominantIconEmotion !== "-" ? (
+              <img
+                src={getEmotionIcon(dominantIconEmotion)}
+                alt={dominantIconEmotion}
+                className="h-12 w-12 object-contain"
+              />
+            ) : (
+              <span className="h-3 w-3 rounded-full bg-slate-400" />
+            )}
           </div>
 
           <div className="min-w-0">
@@ -1498,12 +1522,30 @@ function RightPanel({
                   key={emotion}
                   className="flex items-center justify-between gap-2 text-sm"
                 >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="h-3 w-3 rounded"
-                      style={{ backgroundColor: emotionColors[emotion] }}
-                    ></span>
-                    <span className="font-bold text-slate-700">{emotion}</span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
+                      <img
+                        src={getEmotionIcon(emotion)}
+                        alt={emotion}
+                        className="h-6 w-6 object-contain"
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <span className="block truncate font-bold text-slate-700">
+                        {emotion}
+                      </span>
+
+                      <div className="mt-1 h-1.5 w-24 overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${percentage}%`,
+                            backgroundColor: emotionColors[emotion],
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <span className="font-extrabold text-slate-700">

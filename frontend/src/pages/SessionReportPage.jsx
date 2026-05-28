@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import jsPDF from "jspdf";
 import { useLocation } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
+import { getEmotionIcon } from "../utils/emotionIcons";
 
 import {
   CalendarDays,
@@ -43,14 +44,6 @@ function SessionReportPage() {
     Marah: "#ef4444",
     Takut: "#f59e0b",
     Netral: "#6b7280",
-  };
-
-  const emotionIcon = {
-    Senang: "😊",
-    Sedih: "😟",
-    Marah: "😠",
-    Takut: "😨",
-    Netral: "😐",
   };
 
   const emotionOrder = ["Senang", "Sedih", "Marah", "Takut", "Netral"];
@@ -204,7 +197,6 @@ function SessionReportPage() {
         result.push({
           range: `${formatMinuteRange(start, end)}`,
           emotion: "-",
-          icon: "•",
           color: "#94a3b8",
         });
         continue;
@@ -230,7 +222,6 @@ function SessionReportPage() {
       result.push({
         range: `${formatMinuteRange(start, end)}`,
         emotion: dominant,
-        icon: emotionIcon[dominant],
         color: emotionColors[dominant],
       });
     }
@@ -875,7 +866,6 @@ function SessionReportPage() {
               percentages={percentages}
               emotionOrder={emotionOrder}
               emotionColors={emotionColors}
-              emotionIcon={emotionIcon}
               dominantEmotion={data.dominantEmotion}
             />
 
@@ -996,7 +986,6 @@ function EmotionSummaryCards({
   percentages,
   emotionOrder,
   emotionColors,
-  emotionIcon,
   dominantEmotion,
 }) {
   const dominantLabel = getDominantEmotionLabel(dominantEmotion);
@@ -1033,14 +1022,13 @@ function EmotionSummaryCards({
                   : "border-slate-200 bg-white",
               ].join(" ")}
             >
-              <span
-                className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl shadow-sm ring-1 ring-slate-100"
-                style={{
-                  color: emotionColors[emotion],
-                }}
-              >
-                {emotionIcon[emotion]}
-              </span>
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                <img
+                  src={getEmotionIcon(emotion)}
+                  alt={emotion}
+                  className="h-10 w-10 object-contain"
+                />
+              </div>
 
               <p
                 className={[
@@ -1196,25 +1184,44 @@ function DistributionReportCard({
       </div>
 
       <div className="mt-5 space-y-3">
-        {emotionOrder.map((emotion) => (
-          <div
-            key={emotion}
-            className="grid grid-cols-[18px_1fr_auto] items-center gap-3 rounded-xl bg-slate-50 px-3 py-2"
-          >
-            <span
-              className="h-4 w-4 rounded-md"
-              style={{ backgroundColor: emotionColors[emotion] }}
-            />
+        {emotionOrder.map((emotion) => {
+          const percent = Number(percentages[emotion] || 0);
 
-            <span className="min-w-0 truncate text-sm font-extrabold text-slate-700">
-              {emotion}
-            </span>
+          return (
+            <div
+              key={emotion}
+              className="grid grid-cols-[38px_1fr_auto] items-center gap-3 rounded-2xl bg-slate-50/80 px-3 py-2.5 transition hover:bg-white hover:shadow-sm"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
+                <img
+                  src={getEmotionIcon(emotion)}
+                  alt={emotion}
+                  className="h-7 w-7 object-contain"
+                />
+              </div>
 
-            <span className="whitespace-nowrap text-right text-sm font-extrabold text-slate-800">
-              {percentages[emotion] || "0.0"}% ({counts[emotion] || 0})
-            </span>
-          </div>
-        ))}
+              <div className="min-w-0">
+                <p className="truncate text-sm font-extrabold text-slate-700">
+                  {emotion}
+                </p>
+
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full opacity-90"
+                    style={{
+                      width: `${Math.min(percent, 100)}%`,
+                      backgroundColor: emotionColors[emotion],
+                    }}
+                  />
+                </div>
+              </div>
+
+              <span className="whitespace-nowrap text-right text-sm font-extrabold text-slate-800">
+                {percentages[emotion] || "0.0"}% ({counts[emotion] || 0})
+              </span>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -1252,12 +1259,13 @@ function EmotionTimelineCard({ timeline, chartPoints }) {
                     {item.emotion}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full text-lg text-white"
-                      style={{ backgroundColor: item.color }}
-                    >
-                      {item.icon}
-                    </span>
+                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
+                      <img
+                        src={getEmotionIcon(item.emotion)}
+                        alt={item.emotion}
+                        className="h-8 w-8 object-contain"
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1348,13 +1356,28 @@ function AutomaticInterpretationCard({
       </div>
 
       <div className="space-y-4 text-sm font-semibold leading-6 text-slate-700">
-        <div className={["rounded-2xl border bg-white/80 p-4", tone.border].join(" ")}>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
-            Emosi Dominan
-          </p>
-          <p className={["mt-1 text-xl font-black", tone.text].join(" ")}>
-            {dominantEmotion || "-"}
-          </p>
+        <div
+          className={[
+            "flex items-center gap-4 rounded-2xl border bg-white/80 p-4",
+            tone.border,
+          ].join(" ")}
+        >
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+            <img
+              src={getEmotionIcon(dominantLabel)}
+              alt={dominantLabel}
+              className="h-11 w-11 object-contain"
+            />
+          </div>
+
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+              Emosi Dominan
+            </p>
+            <p className={["mt-1 text-xl font-black", tone.text].join(" ")}>
+              {dominantEmotion || "-"}
+            </p>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
+import { getEmotionIcon } from "../utils/emotionIcons";
 import {
   Search,
   FileText,
@@ -16,24 +17,19 @@ import {
 
 const emotionStyle = {
   Senang: {
-    icon: "😊",
-    soft: "bg-emerald-50",
+    soft: "bg-emerald-50 ring-emerald-100",
   },
   Sedih: {
-    icon: "😟",
-    soft: "bg-blue-50",
+    soft: "bg-blue-50 ring-blue-100",
   },
   Marah: {
-    icon: "😠",
-    soft: "bg-red-50",
+    soft: "bg-red-50 ring-red-100",
   },
   Takut: {
-    icon: "😨",
-    soft: "bg-amber-50",
+    soft: "bg-amber-50 ring-amber-100",
   },
   Netral: {
-    icon: "😐",
-    soft: "bg-slate-100",
+    soft: "bg-slate-100 ring-slate-200",
   },
 };
 
@@ -584,9 +580,13 @@ function ReportRow({ report, rowNumber, onOpen, onDownload, onDelete }) {
 
       <div className="flex min-w-0 items-center gap-2 pr-2">
         <div
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm ${style.soft}`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ${style.soft}`}
         >
-          {style.icon}
+          <img
+            src={getEmotionIcon(emotionMain)}
+            alt={emotionMain}
+            className="h-7 w-7 object-contain"
+          />
         </div>
 
         <div className="min-w-0">
