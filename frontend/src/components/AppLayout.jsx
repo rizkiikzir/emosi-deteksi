@@ -8,9 +8,6 @@ import {
   Activity,
   FileText,
   History,
-  Bell,
-  ShieldCheck,
-  Brain,
   LogOut,
 } from "lucide-react";
 
@@ -115,7 +112,7 @@ function AppLayout({
                   [
                     "group flex items-center gap-3 rounded-2xl px-4 py-2.5 text-[13px] font-bold leading-snug transition-all",
                     isActive
-                      ? "bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] text-white shadow-[0_14px_30px_rgba(91,79,233,0.20)]"
+                      ? "bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] text-white shadow-[0_14px_30px_rgba(37,99,235,0.22)]"
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   ].join(" ")
                 }
@@ -130,18 +127,7 @@ function AppLayout({
         </nav>
 
         <div className="shrink-0 px-3.5 pb-4">
-          <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-indigo-50 p-3 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-              <ShieldCheck size={17} className="shrink-0 text-violet-700" />
-              <span>Aman & Terpercaya</span>
-            </div>
-            <p className="mt-2 text-[11px] font-medium leading-5 text-slate-500">
-              Data sesi konseling terenkripsi dan hanya dapat diakses oleh
-              konselor.
-            </p>
-          </div>
-
-          <div className="mt-4 flex items-center gap-3 rounded-2xl px-1 py-1">
+          <div className="flex items-center gap-3 rounded-2xl px-1 py-1">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-slate-200">
               <img
                 src={logoPnl}
@@ -193,18 +179,8 @@ function AppLayout({
               </div>
             )}
 
-            <button
-              type="button"
-              className="relative rounded-2xl border border-slate-200 bg-white p-2 text-slate-500 shadow-sm transition hover:bg-slate-50"
-            >
-              <Bell size={22} />
-              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-violet-700 text-[10px] font-bold text-white">
-                3
-              </span>
-            </button>
-
-            <div className="flex shrink-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-xs font-extrabold text-slate-500 ring-1 ring-slate-200">
+            <div className="flex shrink-0 items-center gap-3 rounded-3xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-xs font-extrabold text-slate-500 ring-1 ring-slate-200">
                 {displayName
                   .split(" ")
                   .map((word) => word[0])
@@ -216,16 +192,14 @@ function AppLayout({
                 <p className="max-w-44 truncate text-sm font-extrabold text-slate-950">
                   {displayName}
                 </p>
-                <p className="text-xs font-medium text-slate-500">
-                  {displayRole}
-                </p>
+                <p className="text-xs font-semibold text-slate-500">{displayRole}</p>
               </div>
 
               <button
                 type="button"
                 onClick={handleLogout}
                 title="Logout"
-                className="flex h-9 w-9 items-center justify-center rounded-2xl border border-red-100 bg-red-50/60 text-red-600 transition hover:bg-red-100"
+                className="ml-1 flex h-9 w-9 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-600 transition hover:bg-red-100 hover:text-red-700"
               >
                 <LogOut size={17} />
               </button>

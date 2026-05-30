@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
+import { getEmotionIcon } from "../utils/emotionIcons";
 import {
   Search,
   Users,
@@ -68,11 +69,11 @@ const STEPS = [
 ];
 
 const DETECTED_EMOTIONS = [
-  { name: "Senang", emoji: "😊", bg: "bg-emerald-50", ring: "ring-emerald-100" },
-  { name: "Sedih", emoji: "😢", bg: "bg-blue-50", ring: "ring-blue-100" },
-  { name: "Marah", emoji: "😠", bg: "bg-rose-50", ring: "ring-rose-100" },
-  { name: "Takut", emoji: "😨", bg: "bg-amber-50", ring: "ring-amber-100" },
-  { name: "Netral", emoji: "😐", bg: "bg-slate-50", ring: "ring-slate-100" },
+  { name: "Senang", bg: "bg-emerald-50", ring: "ring-emerald-100" },
+  { name: "Sedih", bg: "bg-blue-50", ring: "ring-blue-100" },
+  { name: "Marah", bg: "bg-rose-50", ring: "ring-rose-100" },
+  { name: "Takut", bg: "bg-amber-50", ring: "ring-amber-100" },
+  { name: "Netral", bg: "bg-slate-50", ring: "ring-slate-100" },
 ];
 
 function CreateSessionPage() {
@@ -114,10 +115,10 @@ function CreateSessionPage() {
   }, []);
 
   const inputClass =
-    "h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-[#5B4FE9] focus:ring-4 focus:ring-indigo-50 disabled:bg-slate-50 disabled:text-slate-500 disabled:shadow-none";
+    "h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-[#2563EB] focus:ring-4 focus:ring-blue-50 disabled:bg-slate-50 disabled:text-slate-500 disabled:shadow-none";
 
   const textareaClass =
-    "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-slate-800 shadow-sm outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-[#5B4FE9] focus:ring-4 focus:ring-indigo-50";
+    "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-relaxed text-slate-800 shadow-sm outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-[#2563EB] focus:ring-4 focus:ring-blue-50";
 
   const updateForm = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -493,7 +494,7 @@ function CreateSessionPage() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] px-6 py-3 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(91,79,233,0.22)] transition hover:brightness-105"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] px-6 py-3 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(37,99,235,0.22)] transition hover:brightness-105"
                 >
                   Selanjutnya
                   <ArrowRight size={16} />
@@ -502,7 +503,7 @@ function CreateSessionPage() {
                 <button
                   type="button"
                   onClick={handleStartMonitoring}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] px-6 py-3 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(91,79,233,0.22)] transition hover:brightness-105"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] px-6 py-3 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(37,99,235,0.22)] transition hover:brightness-105"
                 >
                   Mulai Monitoring
                   <ArrowRight size={16} />
@@ -547,7 +548,7 @@ function StudentPicker({
         <button
           type="button"
           onClick={onAddStudent}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-sm font-extrabold text-[#5B4FE9] transition hover:border-indigo-200 hover:bg-indigo-100"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-sm font-extrabold text-[#2563EB] transition hover:border-blue-200 hover:bg-blue-100"
         >
           <Plus size={16} />
           Tambah Data Mahasiswa
@@ -564,7 +565,7 @@ function StudentPicker({
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           placeholder="Cari nama mahasiswa, NIM, atau program studi..."
-          className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#5B4FE9] focus:ring-4 focus:ring-indigo-50"
+          className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-[#2563EB] focus:ring-4 focus:ring-blue-50"
         />
       </div>
 
@@ -595,8 +596,8 @@ function StudentPicker({
                 className={[
                   "w-full rounded-2xl border p-4 text-left transition",
                   isSelected
-                    ? "border-indigo-300 bg-gradient-to-r from-indigo-50 to-teal-50 shadow-sm ring-1 ring-indigo-100"
-                    : "border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/40",
+                    ? "border-blue-300 bg-gradient-to-r from-blue-50 to-sky-50 shadow-sm ring-1 ring-blue-100"
+                    : "border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40",
                 ].join(" ")}
               >
                 <div className="flex items-center gap-3">
@@ -604,8 +605,8 @@ function StudentPicker({
                     className={[
                       "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ring-1",
                       isSelected
-                        ? "bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] text-white ring-indigo-100"
-                        : "bg-[#EEF2FF] text-[#5B4FE9] ring-indigo-100",
+                        ? "bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] text-white ring-blue-100"
+                        : "bg-blue-50 text-[#2563EB] ring-blue-100",
                     ].join(" ")}
                   >
                     {getInitial(student.name)}
@@ -624,7 +625,7 @@ function StudentPicker({
                     className={[
                       "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-black",
                       isSelected
-                        ? "border-[#5B4FE9] bg-[#5B4FE9] text-white"
+                        ? "border-[#2563EB] bg-[#2563EB] text-white"
                         : "border-slate-300 text-transparent",
                     ].join(" ")}
                   >
@@ -656,10 +657,10 @@ function StepProgress({ steps, activeStep }) {
                   className={[
                     "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold transition",
                     isActive
-                      ? "bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] text-white shadow-[0_12px_24px_rgba(91,79,233,0.22)]"
+                      ? "bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] text-white shadow-[0_12px_24px_rgba(37,99,235,0.22)]"
                       : isDone
-                      ? "bg-[#E6FFFB] text-[#0D9488] ring-1 ring-teal-100"
-                      : "bg-slate-100 text-slate-500 ring-1 ring-slate-200",
+                        ? "bg-sky-50 text-sky-700 ring-1 ring-sky-100"
+                        : "bg-slate-100 text-slate-500 ring-1 ring-slate-200",
                   ].join(" ")}
                 >
                   {isDone ? <Check size={18} /> : <Icon size={18} />}
@@ -669,7 +670,7 @@ function StepProgress({ steps, activeStep }) {
                   <p
                     className={[
                       "truncate text-sm font-extrabold",
-                      isActive ? "text-[#5B4FE9]" : "text-slate-800",
+                      isActive ? "text-[#2563EB]" : "text-slate-800",
                     ].join(" ")}
                   >
                     {item.title}
@@ -685,10 +686,10 @@ function StepProgress({ steps, activeStep }) {
                   className={[
                     "h-1 rounded-full transition-all",
                     isDone
-                      ? "bg-[#14B8A6]"
+                      ? "bg-[#38BDF8]"
                       : isActive
-                      ? "bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6]"
-                      : "",
+                        ? "bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8]"
+                        : "",
                   ].join(" ")}
                 />
               </div>
@@ -706,7 +707,7 @@ function DetectionSettingsPanel({ compact = false }) {
       {!compact && (
         <>
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#E6FFFB] text-[#0D9488] ring-1 ring-teal-100">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-50 text-sky-700 ring-1 ring-sky-100">
               <ShieldCheck size={20} />
             </div>
 
@@ -736,13 +737,16 @@ function DetectionSettingsPanel({ compact = false }) {
             >
               <div
                 className={[
-                  "mx-auto flex items-center justify-center rounded-full text-xl ring-1",
+                  "mx-auto flex items-center justify-center rounded-2xl bg-white shadow-sm ring-1",
                   compact ? "h-11 w-11" : "h-14 w-14",
-                  emotion.bg,
                   emotion.ring,
                 ].join(" ")}
               >
-                {emotion.emoji}
+                <img
+                  src={getEmotionIcon(emotion.name)}
+                  alt={emotion.name}
+                  className={compact ? "h-7 w-7 object-contain" : "h-10 w-10 object-contain"}
+                />
               </div>
 
               <p className="mt-2 text-sm font-extrabold text-slate-800">
@@ -755,19 +759,19 @@ function DetectionSettingsPanel({ compact = false }) {
 
       <div className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#5B4FE9] shadow-sm ring-1 ring-indigo-100">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#2563EB] shadow-sm ring-1 ring-indigo-100">
             <Settings size={19} />
           </div>
 
           <div>
-            <p className="text-sm font-extrabold text-[#5B4FE9]">
+            <p className="text-sm font-extrabold text-[#2563EB]">
               Model yang Digunakan
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <p className="text-sm font-bold text-slate-900">
                 CNN LightExNet V2 (Lightweight)
               </p>
-              <span className="rounded-full bg-[#E6FFFB] px-2.5 py-1 text-xs font-extrabold text-[#0D9488] ring-1 ring-teal-100">
+              <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-extrabold text-sky-700 ring-1 ring-sky-100">
                 Aktif
               </span>
             </div>
@@ -850,8 +854,8 @@ function ReviewPanel({ formData, formatDateForDisplay, formatDuration }) {
         />
       </div>
 
-      <div className="rounded-2xl border border-teal-100 bg-[#E6FFFB] px-5 py-4">
-        <p className="text-sm font-semibold leading-relaxed text-teal-900">
+      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4">
+        <p className="text-sm font-semibold leading-relaxed text-blue-900">
           Data sesi sudah siap. Klik tombol <b>Mulai Monitoring</b> untuk
           memulai pemantauan emosi real-time.
         </p>
@@ -881,7 +885,7 @@ function SessionSummary({
   return (
     <aside className="h-fit rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)] xl:sticky xl:top-5">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] text-base font-black text-white shadow-[0_12px_24px_rgba(91,79,233,0.20)]">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] text-base font-black text-white shadow-[0_12px_24px_rgba(37,99,235,0.20)]">
           {step}
         </div>
 
@@ -925,7 +929,7 @@ function SessionSummary({
 
           <div>
             <p className="text-xs font-bold text-slate-500">Mode</p>
-            <span className="mt-1 inline-flex rounded-full bg-[#E6FFFB] px-2.5 py-1 text-xs font-extrabold text-[#0D9488] ring-1 ring-teal-100">
+            <span className="mt-1 inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-xs font-extrabold text-sky-700 ring-1 ring-sky-100">
               Real-Time
             </span>
           </div>

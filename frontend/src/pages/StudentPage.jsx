@@ -4,9 +4,7 @@ import {
   Search,
   Users,
   UserCheck,
-  UserX,
   GraduationCap,
-  CalendarDays,
   Plus,
   Eye,
   Pencil,
@@ -205,17 +203,12 @@ function StudentPage() {
   const stats = useMemo(() => {
     const total = students.length;
     const active = students.filter((student) => student.status === "Aktif").length;
-    const inactive = students.filter(
-      (student) => student.status === "Nonaktif"
-    ).length;
     const programs = new Set(students.map((student) => student.programStudy)).size;
 
     return {
       total,
       active,
-      inactive,
       programs,
-      joinedThisMonth: 5,
     };
   }, [students]);
 
@@ -299,14 +292,14 @@ function StudentPage() {
       const updatedStudents = students.map((student) =>
         student.id === selectedStudent.id
           ? {
-              ...student,
-              nim: formData.nim.trim(),
-              name: formData.name.trim(),
-              programStudy: formData.programStudy.trim(),
-              generation: formData.generation.trim() || "-",
-              status: formData.status,
-              registeredAt: formData.registeredAt || student.registeredAt,
-            }
+            ...student,
+            nim: formData.nim.trim(),
+            name: formData.name.trim(),
+            programStudy: formData.programStudy.trim(),
+            generation: formData.generation.trim() || "-",
+            status: formData.status,
+            registeredAt: formData.registeredAt || student.registeredAt,
+          }
           : student
       );
 
@@ -347,26 +340,19 @@ function StudentPage() {
       showSessionStatus={false}
     >
       <div className="space-y-5">
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard
             icon={<Users size={21} />}
-            iconClass="bg-gradient-to-br from-[#EEF2FF] to-white text-[#5B4FE9] ring-indigo-100"
+            iconClass="bg-gradient-to-br from-indigo-50 to-white text-[#4F46E5] ring-indigo-100"
             label="Total Mahasiswa"
             value={stats.total}
           />
 
           <StatCard
             icon={<UserCheck size={21} />}
-            iconClass="bg-gradient-to-br from-[#E6FFFB] to-white text-[#0D9488] ring-teal-100"
+            iconClass="bg-gradient-to-br from-sky-50 to-white text-[#2563EB] ring-sky-100"
             label="Mahasiswa Aktif"
             value={stats.active}
-          />
-
-          <StatCard
-            icon={<UserX size={21} />}
-            iconClass="bg-gradient-to-br from-amber-50 to-white text-amber-600 ring-amber-100"
-            label="Mahasiswa Nonaktif"
-            value={stats.inactive}
           />
 
           <StatCard
@@ -374,13 +360,6 @@ function StudentPage() {
             iconClass="bg-gradient-to-br from-blue-50 to-white text-blue-600 ring-blue-100"
             label="Program Studi"
             value={stats.programs}
-          />
-
-          <StatCard
-            icon={<CalendarDays size={21} />}
-            iconClass="bg-gradient-to-br from-rose-50 to-white text-rose-600 ring-rose-100"
-            label="Bergabung Bulan Ini"
-            value={stats.joinedThisMonth}
           />
         </section>
 
@@ -403,7 +382,7 @@ function StudentPage() {
             <button
               type="button"
               onClick={resetFilter}
-              className="flex h-12 items-center justify-center gap-3 rounded-2xl border border-indigo-100 bg-white px-6 text-sm font-extrabold text-[#5B4FE9] shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50"
+              className="flex h-12 items-center justify-center gap-3 rounded-2xl border border-blue-100 bg-white px-6 text-sm font-extrabold text-[#2563EB] shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
             >
               <Filter size={16} />
               Reset
@@ -412,7 +391,7 @@ function StudentPage() {
             <button
               type="button"
               onClick={openAddModal}
-              className="flex h-12 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] px-7 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(91,79,233,0.22)] transition hover:brightness-105"
+              className="flex h-12 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] px-7 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(37,99,235,0.22)] transition hover:brightness-105"
             >
               <Plus size={16} />
               Tambah
@@ -521,11 +500,10 @@ function StudentPage() {
                     key={page}
                     type="button"
                     onClick={() => setCurrentPage(page)}
-                    className={`h-9 w-9 rounded-xl text-sm font-extrabold transition ${
-                      currentPage === page
-                        ? "bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] text-white shadow-[0_10px_20px_rgba(91,79,233,0.18)]"
-                        : "border border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
+                    className={`h-9 w-9 rounded-xl text-sm font-extrabold transition ${currentPage === page
+                      ? "bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] text-white shadow-[0_10px_20px_rgba(37,99,235,0.18)]"
+                      : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+                      }`}
                   >
                     {page}
                   </button>
@@ -625,7 +603,7 @@ function StudentRow({ student, rowNumber, onView, onEdit, onDelete }) {
       </div>
 
       <div className="flex min-w-0 items-center gap-3 pr-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#EEF2FF] text-xs font-extrabold text-[#5B4FE9] ring-1 ring-indigo-100">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-xs font-extrabold text-[#2563EB] ring-1 ring-blue-100">
           {initial}
         </div>
 
@@ -659,14 +637,14 @@ function StudentRow({ student, rowNumber, onView, onEdit, onDelete }) {
           title="Lihat detail"
           icon={<Eye size={14} />}
           onClick={onView}
-          className="text-[#5B4FE9] hover:border-indigo-200 hover:bg-indigo-50"
+          className="text-[#2563EB] hover:border-blue-200 hover:bg-blue-50"
         />
 
         <ActionButton
           title="Edit mahasiswa"
           icon={<Pencil size={14} />}
           onClick={onEdit}
-          className="text-[#5B4FE9] hover:border-indigo-200 hover:bg-indigo-50"
+          className="text-[#2563EB] hover:border-blue-200 hover:bg-blue-50"
         />
 
         <ActionButton
@@ -698,11 +676,10 @@ function StatusBadge({ status }) {
 
   return (
     <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-extrabold ring-1 ${
-        isActive
-          ? "bg-[#E6FFFB] text-[#0D9488] ring-teal-100"
-          : "bg-amber-50 text-amber-700 ring-amber-100"
-      }`}
+      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-extrabold ring-1 ${isActive
+        ? "bg-sky-50 text-sky-700 ring-sky-100"
+        : "bg-amber-50 text-amber-700 ring-amber-100"
+        }`}
     >
       {status}
     </span>
@@ -715,8 +692,8 @@ function StudentModal({ mode, formData, onChange, onClose, onSubmit }) {
     mode === "add"
       ? "Tambah Mahasiswa"
       : mode === "edit"
-      ? "Edit Mahasiswa"
-      : "Detail Mahasiswa";
+        ? "Edit Mahasiswa"
+        : "Detail Mahasiswa";
 
   const inputClass =
     "h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-[#5B4FE9] focus:ring-4 focus:ring-indigo-50 disabled:bg-slate-50 disabled:text-slate-500";
@@ -820,7 +797,7 @@ function StudentModal({ mode, formData, onChange, onClose, onSubmit }) {
             <button
               type="button"
               onClick={onSubmit}
-              className="rounded-2xl bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] px-5 py-3 text-sm font-extrabold text-white shadow-[0_12px_24px_rgba(91,79,233,0.20)] transition hover:brightness-105"
+              className="rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] px-5 py-3 text-sm font-extrabold text-white shadow-[0_12px_24px_rgba(37,99,235,0.20)] transition hover:brightness-105"
             >
               Simpan Data
             </button>

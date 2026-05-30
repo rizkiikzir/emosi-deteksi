@@ -22,14 +22,6 @@ const EMOTION_COLORS = {
   Netral: "#6b7280",
 };
 
-const EMOTION_EMOJI = {
-  Senang: "😊",
-  Sedih: "😢",
-  Marah: "😠",
-  Takut: "😨",
-  Netral: "😐",
-};
-
 const SAMPLE_RECENT_SESSIONS = [
   {
     id: "KS-20240512-001",
@@ -218,7 +210,7 @@ function DashboardPage() {
     <AppLayout title="Dashboard" subtitle="">
       <div className="space-y-5">
         <section className="relative overflow-hidden rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-          <div className="pointer-events-none absolute -right-20 -top-24 h-60 w-60 rounded-full bg-[#E6FFFB]/70 blur-2xl" />
+          <div className="pointer-events-none absolute -right-20 -top-24 h-60 w-60 rounded-full bg-sky-100/80 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-[#EEF2FF]/80 blur-2xl" />
 
           <div className="relative flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -233,7 +225,7 @@ function DashboardPage() {
             </div>
 
             <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-3 text-sm shadow-sm backdrop-blur">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#EEF2FF] to-[#E6FFFB] text-[#5B4FE9] ring-1 ring-indigo-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 to-sky-50 text-[#2563EB] ring-1 ring-blue-100">
                 <CalendarDays size={18} />
               </div>
               <div>
@@ -258,7 +250,7 @@ function DashboardPage() {
 
           <StatCard
             icon={<CalendarDays size={21} />}
-            iconClass="bg-gradient-to-br from-[#E6FFFB] to-white text-[#0D9488] ring-teal-100"
+            iconClass="bg-gradient-to-br from-sky-50 to-white text-sky-600 ring-sky-100"
             label="Total Sesi Konseling"
             value={stats.totalSessions}
           />
@@ -332,7 +324,7 @@ function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => navigate("/sesi-konseling")}
-                  className="rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-2 text-sm font-extrabold text-[#5B4FE9] transition hover:bg-[#EEF2FF]"
+                  className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-extrabold text-[#2563EB] transition hover:bg-blue-100"
                 >
                   Lihat semua
                 </button>
@@ -346,6 +338,7 @@ function DashboardPage() {
             </section>
           </div>
 
+          {/* KOLOM KANAN: Distribusi + Emosi Dominan */}
           {/* KOLOM KANAN: Distribusi + Emosi Dominan */}
           <div className="space-y-5">
             <div className="rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
@@ -368,38 +361,39 @@ function DashboardPage() {
                   ))}
                 </div>
               </div>
-            </div>
 
-            <div className="rounded-[26px] border border-teal-100 bg-gradient-to-br from-[#E6FFFB] to-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-              <h3 className="text-base font-extrabold text-slate-950">
-                Emosi Dominan
-              </h3>
+              <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#2563EB]">
+                  Emosi Dominan
+                </p>
 
-              <div className="mt-4 flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-teal-100">
-                  <img
-                    src={getEmotionIcon(dominantEmotion)}
-                    alt={dominantEmotion}
-                    className="h-13 w-13 object-contain"
-                  />
-                </div>
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="flex h-13 w-13 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-blue-100">
+                    <img
+                      src={getEmotionIcon(dominantEmotion)}
+                      alt={dominantEmotion}
+                      className="h-10 w-10 object-contain"
+                    />
+                  </div>
 
-                <div>
-                  <h4 className="text-xl font-extrabold text-slate-950">
-                    {dominantEmotion}
-                  </h4>
-                  <p className="mt-1 text-sm font-semibold text-slate-500">
-                    {getDominantPercentage(emotionDistribution, dominantEmotion)}% dari
-                    total deteksi
-                  </p>
+                  <div className="min-w-0">
+                    <h4 className="truncate text-lg font-extrabold text-slate-950">
+                      {dominantEmotion}
+                    </h4>
+                    <p className="mt-0.5 text-sm font-semibold text-slate-500">
+                      {getDominantPercentage(emotionDistribution, dominantEmotion)}% dari
+                      total deteksi
+                    </p>
 
-                  <span className="mt-2 inline-flex rounded-full border border-teal-100 bg-white px-2.5 py-1 text-xs font-extrabold text-[#0D9488]">
-                    Stabil
-                  </span>
+                    <span className="mt-2 inline-flex rounded-full border border-blue-100 bg-white px-2.5 py-1 text-xs font-extrabold text-slate-700">
+                      Stabil
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
         </section>
 
         <footer className="pb-3 text-center text-xs font-medium text-slate-500">

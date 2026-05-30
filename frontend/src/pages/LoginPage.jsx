@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import serinLogo from "../assets/serin-logo.png";
 import serinIcon from "../assets/serin-icon.png";
 import logoPnl from "../assets/logo-Pnl.png";
+import { getEmotionIcon } from "../utils/emotionIcons";
 import { Eye, EyeOff, Info, Lock, UserRound } from "lucide-react";
 
 function LoginPage() {
@@ -95,17 +96,16 @@ function LoginPage() {
                             </p>
 
                             <div className="mt-3 grid grid-cols-5 gap-3">
-                                {[
-                                    ["😊", "Senang"],
-                                    ["😟", "Sedih"],
-                                    ["😠", "Marah"],
-                                    ["😨", "Takut"],
-                                    ["😐", "Netral"],
-                                ].map(([emoji, label]) => (
+                                {["Senang", "Sedih", "Marah", "Takut", "Netral"].map((label) => (
                                     <div key={label} className="text-center">
-                                        <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xl">
-                                            {emoji}
+                                        <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
+                                            <img
+                                                src={getEmotionIcon(label)}
+                                                alt={label}
+                                                className="h-8 w-8 object-contain"
+                                            />
                                         </div>
+
                                         <p className="mt-2 text-xs font-semibold text-slate-800">
                                             {label}
                                         </p>
@@ -308,7 +308,7 @@ function Decorations() {
             </div>
             <div className="absolute bottom-28 right-0 h-24 w-96 rounded-[50%] border-t border-[#14B8A6]/35" />
             <div className="absolute bottom-20 right-6 h-24 w-96 rounded-[50%] border-t border-[#5B4FE9]/25" />
-            <div className="absolute bottom-12 right-12 h-24 w-96 rounded-[50%] border-t border-border-[#14B8A6]/25" />
+            <div className="absolute bottom-12 right-12 h-24 w-96 rounded-[50%] border-t border-[#14B8A6]/25" />
         </>
     );
 }

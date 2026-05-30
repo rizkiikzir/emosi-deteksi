@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import serinIcon from "../assets/serin-icon.png";
+import { getEmotionIcon } from "../utils/emotionIcons";
 import {
   Activity,
   BarChart3,
@@ -260,8 +261,12 @@ function HeroMockup() {
           <div className="mt-3 grid gap-3 lg:grid-cols-[220px_105px_1fr]">
             <div className="rounded-xl bg-slate-100 p-2.5">
               <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-slate-200">
-                <div className="rounded-xl border border-slate-200 p-3 text-center">
-                  🙂
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-emerald-100">
+                  <img
+                    src={getEmotionIcon("Senang")}
+                    alt="Senang"
+                    className="h-10 w-10 object-contain"
+                  />
                 </div>
                 <div className="absolute inset-10 rounded-xl border-2 border-emerald-500" />
               </div>
@@ -276,8 +281,12 @@ function HeroMockup() {
               <p className="text-xs font-bold text-slate-500">
                 Emosi Saat Ini
               </p>
-              <div className="mx-auto mt-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-3xl">
-                😊
+              <div className="mx-auto mt-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-emerald-100">
+                <img
+                  src={getEmotionIcon("Senang")}
+                  alt="Senang"
+                  className="h-10 w-10 object-contain"
+                />
               </div>
               <h4 className="mt-2 text-lg font-extrabold text-emerald-700">
                 Senang
@@ -593,27 +602,29 @@ function ArchItem({ icon, label }) {
 }
 
 function EmotionCards({ compact = false }) {
-  const emotions = [
-    ["😊", "Senang"],
-    ["😟", "Sedih"],
-    ["😠", "Marah"],
-    ["😨", "Takut"],
-    ["😐", "Netral"],
-  ];
+  const emotions = ["Senang", "Sedih", "Marah", "Takut", "Netral"];
 
   return (
     <div
-      className={`grid max-w-[560px] grid-cols-5 gap-4 ${
-        compact ? "mt-6" : "mt-5"
-      }`}
+      className={`grid max-w-[560px] grid-cols-5 gap-4 ${compact ? "mt-6" : "mt-5"
+        }`}
     >
-      {emotions.map(([emoji, label]) => (
+      {emotions.map((label) => (
         <div
           key={label}
-          className="flex h-20 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(15,23,42,0.07)]"
+          className="flex h-20 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-[0_12px_28px_rgba(15,23,42,0.07)]"
         >
-          <span className="text-3xl">{emoji}</span>
-          <p className="mt-3 text-sm font-semibold text-slate-800">{label}</p>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
+            <img
+              src={getEmotionIcon(label)}
+              alt={label}
+              className="h-7 w-7 object-contain"
+            />
+          </div>
+
+          <p className="mt-2.5 text-sm font-semibold text-slate-800">
+            {label}
+          </p>
         </div>
       ))}
     </div>
