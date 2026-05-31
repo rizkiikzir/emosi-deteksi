@@ -9,6 +9,7 @@ import SessionReportPage from "./pages/SessionReportPage";
 import SessionPage from "./pages/SessionPage";
 import ReportHistoryPage from "./pages/ReportHistoryPage";
 import ReportDetailPage from "./pages/ReportDetailPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
@@ -127,6 +128,7 @@ function App() {
         <Route path="/sesi-konseling" element={<SessionPage />} />
         <Route path="/riwayat-laporan" element={<ReportHistoryPage />} />
         <Route path="/detail-laporan/:id" element={<ReportDetailPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </BrowserRouter>
   );

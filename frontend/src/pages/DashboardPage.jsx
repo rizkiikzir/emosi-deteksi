@@ -9,6 +9,7 @@ import {
   FileText,
   BarChart3,
   Info,
+  Smile,
 } from "lucide-react";
 
 const STUDENTS_KEY = "studentsData";
@@ -97,6 +98,12 @@ const SAMPLE_SCATTER_POINTS = [
 
 function DashboardPage() {
   const navigate = useNavigate();
+
+  const counselorProfile = safeParse(localStorage.getItem("serinUserProfile")) || {
+    name: "Admin Unit BK",
+  };
+
+  const counselorName = counselorProfile.name || "Admin Unit BK";
 
   const [students, setStudents] = useState([]);
   const [currentSession, setCurrentSession] = useState(null);
@@ -215,8 +222,11 @@ function DashboardPage() {
 
           <div className="relative flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
-              <h2 className="text-xl font-extrabold tracking-tight text-slate-950">
-                Selamat datang, Hendrawaty, ST., MT 👋
+              <h2 className="flex flex-wrap items-center gap-2 text-xl font-black text-slate-950">
+                <span>Selamat datang, {counselorName}</span>
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-blue-50 text-[#2563EB] ring-1 ring-blue-100">
+                  <Smile size={16} strokeWidth={2.4} />
+                </span>
               </h2>
               <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
                 Kelola sesi konseling dan pantau emosi mahasiswa secara real-time
@@ -756,6 +766,8 @@ function getDominantPercentage(distribution, dominantEmotion) {
   return item ? item.value : 0;
 }
 
+
+
 function normalizeSession(item, fallbackStatus = "Selesai") {
   return {
     id: item.sessionId || item.id || item.reportId || `KS-${Date.now()}`,
@@ -766,11 +778,10 @@ function normalizeSession(item, fallbackStatus = "Selesai") {
       item.namaMahasiswa ||
       "-",
     nim: item.nim || item.student?.nim || "-",
-    counselorName:
-      item.counselorName ||
+    counselorName: item.counselorName ||
       item.counselor ||
       item.namaKonselor ||
-      "Hendrawaty, ST., MT",
+      getCurrentCounselorName(),
     startDate:
       item.startDate ||
       item.date ||
@@ -821,6 +832,12 @@ function safeParse(value) {
   } catch {
     return null;
   }
+}
+
+function getCurrentCounselorName() {
+  const profile = safeParse(localStorage.getItem("serinUserProfile"));
+
+  return profile?.name || "Admin Unit BK";
 }
 
 function formatDateDisplay(value) {

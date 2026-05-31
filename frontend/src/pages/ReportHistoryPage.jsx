@@ -8,8 +8,6 @@ import {
   Eye,
   Download,
   CalendarDays,
-  BarChart3,
-  Clock,
   Smile,
   Filter,
   Trash2,
@@ -203,8 +201,6 @@ function ReportHistoryPage() {
   ).length;
 
   const mostDominantEmotion = getMostDominantEmotion(normalizedReports);
-  const averageAccuracy = getAverageAccuracy(normalizedReports);
-  const averageDuration = getAverageDuration(normalizedReports);
 
   const openDetail = (report) => {
     localStorage.setItem("selectedSessionReport", JSON.stringify(report));
@@ -259,40 +255,26 @@ function ReportHistoryPage() {
       showSessionStatus={false}
     >
       <div className="space-y-5">
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard
             icon={<FileText size={21} />}
-            iconClass="bg-indigo-50 text-[#5B4FE9] ring-indigo-100"
+            iconClass="bg-indigo-50 text-[#4F46E5] ring-indigo-100"
             label="Total Laporan"
             value={totalReports}
           />
 
           <StatCard
             icon={<CalendarDays size={21} />}
-            iconClass="bg-teal-50 text-[#0D9488] ring-teal-100"
+            iconClass="bg-sky-50 text-sky-600 ring-sky-100"
             label="Bulan Ini"
             value={thisMonthReports}
           />
 
           <StatCard
-            icon={<Clock size={21} />}
-            iconClass="bg-amber-50 text-amber-600 ring-amber-100"
-            label="Rata-rata Durasi"
-            value={averageDuration}
-          />
-
-          <StatCard
             icon={<Smile size={21} />}
-            iconClass="bg-blue-50 text-blue-600 ring-blue-100"
+            iconClass="bg-blue-50 text-[#2563EB] ring-blue-100"
             label="Emosi Dominan"
             value={mostDominantEmotion.label}
-          />
-
-          <StatCard
-            icon={<BarChart3 size={21} />}
-            iconClass="bg-rose-50 text-rose-600 ring-rose-100"
-            label="Akurasi Model"
-            value={`${averageAccuracy}%`}
           />
         </section>
 
@@ -309,14 +291,14 @@ function ReportHistoryPage() {
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 placeholder="Cari nama mahasiswa, NIM, topik, atau ID sesi..."
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50"
+                className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
               />
             </div>
 
             <button
               type="button"
               onClick={resetFilter}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-indigo-100 bg-white px-5 text-sm font-extrabold text-[#5B4FE9] shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-blue-100 bg-white px-5 text-sm font-extrabold text-[#2563EB] shadow-sm transition hover:border-blue-200 hover:bg-blue-50"
             >
               <Filter size={16} />
               Reset
@@ -325,7 +307,7 @@ function ReportHistoryPage() {
             <button
               type="button"
               onClick={() => exportReportsToCSV(filteredReports)}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] px-6 text-sm font-extrabold text-white shadow-[0_16px_34px_rgba(91,79,233,0.22)] transition hover:brightness-105 active:scale-[0.99]"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] px-6 text-sm font-extrabold text-white shadow-[0_16px_34px_rgba(37,99,235,0.22)] transition hover:brightness-105 active:scale-[0.99]"
             >
               <Download size={16} />
               Export
@@ -413,7 +395,7 @@ function ReportHistoryPage() {
                   setRowsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm outline-none transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50"
+                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
               >
                 <option value={8}>8 / halaman</option>
                 <option value={10}>10 / halaman</option>
@@ -438,7 +420,7 @@ function ReportHistoryPage() {
                     type="button"
                     onClick={() => setCurrentPage(page)}
                     className={`h-9 w-9 rounded-xl text-sm font-extrabold transition ${currentPage === page
-                      ? "bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] text-white shadow-[0_10px_22px_rgba(91,79,233,0.20)]"
+                      ? "bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] text-white shadow-[0_10px_22px_rgba(37,99,235,0.20)]"
                       : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                       }`}
                   >
@@ -508,7 +490,7 @@ function FilterSelect({ label, value, onChange, options, icon }) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className={`h-12 w-full appearance-none rounded-2xl border border-slate-200 bg-white ${icon ? "pl-11" : "pl-4"
-            } pr-10 text-sm font-bold text-slate-700 shadow-sm outline-none transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50`}
+            } pr-10 text-sm font-bold text-slate-700 shadow-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-50`}
         >
           {options.map((option) => (
             <option key={option} value={option}>
@@ -542,7 +524,7 @@ function ReportRow({ report, rowNumber, onOpen, onDownload, onDelete }) {
       </div>
 
       <div className="flex min-w-0 items-center gap-3 pr-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-xs font-extrabold text-[#5B4FE9]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-xs font-extrabold text-[#2563EB]">
           {initial}
         </div>
 
@@ -611,7 +593,7 @@ function ReportRow({ report, rowNumber, onOpen, onDownload, onDelete }) {
           type="button"
           onClick={onOpen}
           title="Lihat detail"
-          className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#5B4FE9] transition hover:border-indigo-200 hover:bg-indigo-50"
+          className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#2563EB] transition hover:border-blue-200 hover:bg-blue-50"
         >
           <Eye size={14} />
         </button>
@@ -620,7 +602,7 @@ function ReportRow({ report, rowNumber, onOpen, onDownload, onDelete }) {
           type="button"
           onClick={onDownload}
           title="Unduh laporan"
-          className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#5B4FE9] transition hover:border-indigo-200 hover:bg-indigo-50"
+          className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-[#2563EB] transition hover:border-blue-200 hover:bg-blue-50"
         >
           <Download size={14} />
         </button>

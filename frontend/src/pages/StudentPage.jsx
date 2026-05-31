@@ -12,6 +12,7 @@ import {
   Filter,
   X,
 } from "lucide-react";
+import { fileToBase64, validateImageFile } from "../utils/imageUpload";
 
 const STORAGE_KEY = "studentsData";
 
@@ -115,6 +116,7 @@ const emptyForm = {
   generation: "2022",
   status: "Aktif",
   registeredAt: "",
+  photo: "",
 };
 
 function StudentPage() {
@@ -243,6 +245,27 @@ function StudentPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleStudentPhotoChange = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const errorMessage = validateImageFile(file);
+
+    if (errorMessage) {
+      alert(errorMessage);
+      event.target.value = "";
+      return;
+    }
+
+    const base64Photo = await fileToBase64(file);
+
+    setFormData((current) => ({
+      ...current,
+      photo: base64Photo,
+    }));
+  };
+
   const handleSubmit = () => {
     if (
       !formData.nim.trim() ||
@@ -271,6 +294,7 @@ function StudentPage() {
         generation: formData.generation.trim() || "-",
         status: formData.status,
         registeredAt: formData.registeredAt || getTodayDisplay(),
+        photo: formData.photo || "",
       };
 
       saveStudents([newStudent, ...students]);
@@ -299,6 +323,7 @@ function StudentPage() {
             generation: formData.generation.trim() || "-",
             status: formData.status,
             registeredAt: formData.registeredAt || student.registeredAt,
+            photo: formData.photo || "",
           }
           : student
       );
@@ -529,6 +554,7 @@ function StudentPage() {
             mode={modalMode}
             formData={formData}
             onChange={handleChange}
+            onPhotoChange={handleStudentPhotoChange}
             onClose={closeModal}
             onSubmit={handleSubmit}
           />
@@ -686,7 +712,14 @@ function StatusBadge({ status }) {
   );
 }
 
-function StudentModal({ mode, formData, onChange, onClose, onSubmit }) {
+function StudentModal({
+  mode,
+  formData,
+  onChange,
+  onPhotoChange,
+  onClose,
+  onSubmit,
+}) {
   const isView = mode === "view";
   const title =
     mode === "add"
@@ -721,6 +754,62 @@ function StudentModal({ mode, formData, onChange, onClose, onSubmit }) {
         </div>
 
         <div className="grid gap-4 p-6 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <p className="mb-2 text-sm font-extrabold text-slate-700">
+              Foto Mahasiswa{" "}
+              <span className="font-bold text-slate-400">(Opsional)</span>
+            </p>
+
+            <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-50 text-xl font-black text-[#2563EB] ring-1 ring-blue-100">
+                {formData.photo ? (
+                  <img
+                    src={formData.photo}
+                    alt={formData.name || "Mahasiswa"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  getInitial(formData.name || "Mahasiswa")
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                {isView ? (
+                  <p className="text-sm font-semibold text-slate-500">
+                    Foto mahasiswa hanya ditampilkan pada detail data.
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      <label className="inline-flex h-11 cursor-pointer items-center justify-center rounded-2xl border border-blue-100 bg-white px-5 text-sm font-extrabold text-[#2563EB] shadow-sm transition hover:bg-blue-50">
+                        Pilih Foto
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg,image/webp"
+                          onChange={onPhotoChange}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {formData.photo && (
+                        <button
+                          type="button"
+                          onClick={() => onChange("photo", "")}
+                          className="inline-flex h-11 items-center justify-center rounded-2xl border border-rose-100 bg-rose-50 px-4 text-sm font-extrabold text-rose-700 transition hover:bg-rose-100"
+                        >
+                          Hapus Foto
+                        </button>
+                      )}
+                    </div>
+
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      Format JPG, PNG, atau WEBP. Maksimal 2MB.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
           <Field label="NIM" required>
             <input
               disabled={isView}

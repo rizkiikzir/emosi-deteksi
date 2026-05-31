@@ -840,7 +840,7 @@ function SessionReportPage() {
       headerActions={
         <>
           <div className="flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-extrabold text-slate-700 shadow-sm">
-            <CalendarDays size={17} className="text-indigo-600" />
+            <CalendarDays size={17} className="text-[#2563EB]" />
             {sessionInfo.startDate || "12 Mei 2024"}
           </div>
 
@@ -848,7 +848,7 @@ function SessionReportPage() {
             type="button"
             onClick={handleDownloadPdf}
             disabled={isDownloading}
-            className="flex h-11 items-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 text-sm font-extrabold text-indigo-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex h-11 items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 text-sm font-extrabold text-[#2563EB] shadow-sm transition hover:border-blue-200 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Download size={17} />
             {isDownloading ? "Membuat PDF..." : "Unduh PDF"}
@@ -878,7 +878,7 @@ function SessionReportPage() {
 
             <ImportantMomentsCard markers={markers} />
 
-            <div className="flex items-center gap-3 rounded-xl border border-violet-100 bg-violet-50 p-4 text-sm font-medium text-violet-800">
+            <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-900">
               <Info size={18} className="shrink-0" />
               Laporan ini dihasilkan secara otomatis oleh sistem dan dapat
               digunakan sebagai bahan pertimbangan awal bagi konselor.
@@ -954,7 +954,7 @@ function SessionIdentityCard({ sessionInfo, duration }) {
 function IdentityItem({ item }) {
   return (
     <div className="flex min-w-0 items-center gap-4 border-b border-slate-100 px-5 py-5 last:border-b-0 md:border-r md:even:border-r-0 xl:border-b-0 xl:even:border-r xl:last:border-r-0">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[#2563EB] ring-1 ring-blue-100">
         {item.icon}
       </div>
 
@@ -1002,9 +1002,6 @@ function EmotionSummaryCards({
           </p>
         </div>
 
-        <span className="rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-xs font-extrabold text-teal-700">
-          Total ringkasan
-        </span>
       </div>
 
       <div className="grid grid-cols-5 gap-3">
@@ -1066,12 +1063,12 @@ function ScatterReportCard({ scatterData, scatterOptions }) {
         Grafik Sebaran Emosi Selama Sesi
       </h3>
 
-      <div className="h-[330px]">
+      <div className="h-[260px]">
         <Scatter data={scatterData} options={scatterOptions} />
       </div>
 
-      <div className="mt-4 flex gap-3 rounded-xl border border-violet-100 bg-violet-50 p-4 text-sm font-medium text-slate-600">
-        <Info size={18} className="mt-0.5 shrink-0 text-violet-700" />
+      <div className="mt-4 flex gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-slate-600">
+        <Info size={18} className="mt-0.5 shrink-0 text-[#2563EB]" />
         <p>
           Setiap titik merepresentasikan hasil prediksi emosi pada interval
           waktu tertentu selama sesi berlangsung.
@@ -1085,7 +1082,7 @@ function SessionInfoCard({ sessionInfo, report, duration, totalDetected }) {
   return (
     <section className="rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
       <div className="mb-5 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-[#2563EB] ring-1 ring-blue-100">
           <CalendarDays size={20} />
         </div>
 
@@ -1120,7 +1117,7 @@ function InfoRow({ label, value, badge }) {
       <span className="font-bold text-slate-500">{label}</span>
 
       {badge ? (
-        <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-extrabold text-teal-700 ring-1 ring-teal-100">
+        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-extrabold text-[#2563EB] ring-1 ring-blue-100">
           {value}
         </span>
       ) : (
@@ -1274,8 +1271,8 @@ function EmotionTimelineCard({ timeline, chartPoints }) {
         </div>
       )}
 
-      <div className="mt-4 flex gap-3 rounded-xl border border-violet-100 bg-violet-50 p-4 text-sm font-medium text-slate-600">
-        <Info size={18} className="mt-0.5 shrink-0 text-violet-700" />
+      <div className="mt-4 flex gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-slate-600">
+        <Info size={18} className="mt-0.5 shrink-0 text-[#2563EB]" />
         <p>
           Timeline menunjukkan emosi yang paling dominan pada setiap interval
           waktu satu menit.
@@ -1341,15 +1338,15 @@ function AutomaticInterpretationCard({
   const tone = getEmotionTone(dominantLabel);
 
   return (
-    <section className="rounded-[26px] border border-teal-100 bg-gradient-to-br from-teal-50 via-white to-indigo-50 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-      <div className="mb-5 flex items-center gap-3 text-teal-800">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-teal-700 shadow-sm ring-1 ring-teal-100">
+    <section className="rounded-[26px] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-sky-50 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+      <div className="mb-5 flex items-center gap-3 text-blue-900">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#2563EB] shadow-sm ring-1 ring-blue-100">
           <CheckCircle2 size={21} />
         </div>
 
         <div>
           <h3 className="text-lg font-black tracking-tight">Interpretasi Otomatis</h3>
-          <p className="text-sm font-semibold text-teal-700/80">
+          <p className="text-sm font-semibold text-blue-700/80">
             Analisis awal berdasarkan distribusi emosi.
           </p>
         </div>
@@ -1380,7 +1377,7 @@ function AutomaticInterpretationCard({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
           <p className="font-extrabold text-slate-950">Interpretasi Sistem</p>
           <p className="mt-2 leading-7">{interpretation}</p>
         </div>

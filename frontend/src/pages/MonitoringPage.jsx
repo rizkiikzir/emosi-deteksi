@@ -1052,8 +1052,8 @@ function MonitoringPage() {
         </section>
 
         <section className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_520px]">
-          <div className="flex items-center gap-3 rounded-[22px] border border-indigo-100 bg-white p-4 text-sm font-semibold leading-relaxed text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.055)]">
-            <Info size={18} className="shrink-0 text-indigo-600" />
+          <div className="flex items-center gap-3 rounded-[22px] border border-blue-100 bg-white p-4 text-sm font-semibold leading-relaxed text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.055)]">
+            <Info size={18} className="shrink-0 text-[#2563EB]" />
             <p>
               Pastikan pencahayaan wajah cukup dan posisi mahasiswa menghadap kamera
               untuk hasil deteksi yang optimal.
@@ -1073,7 +1073,7 @@ function MonitoringPage() {
                 setIsMonitoring((prev) => !prev);
               }}
               disabled={!isCameraOn}
-              className="rounded-2xl border border-indigo-100 bg-white px-5 py-4 text-sm font-extrabold text-indigo-600 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-45"
+              className="rounded-2xl border border-blue-100 bg-white px-5 py-4 text-sm font-extrabold text-[#2563EB] shadow-sm transition hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isMonitoring ? "Jeda Deteksi" : "Lanjut Deteksi"}
             </button>
@@ -1135,7 +1135,7 @@ function SessionInfoBar({ sessionInfo, duration }) {
           key={item.label}
           className="flex min-w-0 items-center gap-4 border-r border-slate-100 px-5 py-5 last:border-r-0"
         >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-50 to-teal-50 text-[#5B4FE9] ring-1 ring-indigo-100">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-sky-50 text-[#2563EB] ring-1 ring-blue-100">
             {item.icon}
           </div>
 
@@ -1187,7 +1187,7 @@ function CameraPanel({
           </p>
         </div>
 
-        <span className="rounded-full bg-emerald-50 px-4 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+        <span className="rounded-full bg-blue-50 px-4 py-1 text-xs font-extrabold text-[#2563EB] ring-1 ring-blue-100">
           LIVE
         </span>
       </div>
@@ -1198,7 +1198,7 @@ function CameraPanel({
       <select
         value={selectedCameraId}
         onChange={(e) => setSelectedCameraId(e.target.value)}
-        className="mb-4 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50"
+        className="mb-4 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
       >
         {cameraDevices.map((device, index) => (
           <option key={device.deviceId} value={device.deviceId}>
@@ -1348,8 +1348,8 @@ function MiddlePanel({
           ))}
         </div>
 
-        <div className="mt-6 flex gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-4 text-sm font-medium text-slate-600">
-          <Info size={18} className="mt-0.5 shrink-0 text-[#5B4FE9]" />
+        <div className="mt-6 flex gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-sm font-medium text-slate-600">
+          <Info size={18} className="mt-0.5 shrink-0 text-[#2563EB]" />
           <p>
             Probabilitas menunjukkan tingkat keyakinan model terhadap setiap
             emosi pada frame saat ini.
@@ -1450,7 +1450,7 @@ function RightPanel({
                   ? "bg-emerald-50 text-emerald-700"
                   : statusText === "-"
                     ? "bg-slate-100 text-slate-500"
-                    : "bg-amber-50 text-amber-700",
+                    : "bg-orange-50 text-orange-700 ring-1 ring-orange-100",
               ].join(" ")}
             >
               {statusText}
@@ -1557,8 +1557,8 @@ function RightPanel({
           </div>
         </div>
 
-        <div className="mt-5 flex gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-4 text-sm font-medium text-slate-600">
-          <Info size={18} className="mt-0.5 shrink-0 text-[#5B4FE9]" />
+        <div className="mt-5 flex gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-sm font-medium text-slate-600">
+          <Info size={18} className="mt-0.5 shrink-0 text-[#2563EB]" />
           <p>
             Distribusi dihitung berdasarkan seluruh deteksi sejak sesi dimulai
             hingga saat ini.
@@ -1576,12 +1576,12 @@ function ScatterPanel({ scatterData, scatterOptions }) {
         Grafik Sebaran Emosi Selama Sesi
       </h3>
 
-      <div className="h-[320px]">
+      <div className="h-[280px]">
         <Scatter data={scatterData} options={scatterOptions} />
       </div>
 
-      <div className="mt-4 flex gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-4 text-sm font-medium text-slate-600">
-        <Info size={18} className="mt-0.5 shrink-0 text-[#5B4FE9]" />
+      <div className="mt-4 flex gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-sm font-medium text-slate-600">
+        <Info size={18} className="mt-0.5 shrink-0 text-[#2563EB]" />
         <p>
           Setiap titik merepresentasikan hasil prediksi emosi pada interval
           waktu tertentu selama sesi berlangsung.
@@ -1594,9 +1594,9 @@ function ScatterPanel({ scatterData, scatterOptions }) {
 function ActionButton({ children, onClick, disabled, variant = "light" }) {
   const variants = {
     light:
-      "border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-indigo-200 hover:bg-indigo-50",
+      "border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-blue-200 hover:bg-blue-50",
     primary:
-      "border border-transparent bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] text-white shadow-[0_14px_28px_rgba(91,79,233,0.22)] hover:brightness-105",
+      "border border-transparent bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] text-white shadow-[0_14px_28px_rgba(37,99,235,0.22)] hover:brightness-105",
     danger:
       "border border-rose-100 bg-rose-50 text-rose-700 shadow-sm hover:bg-rose-100",
   };
@@ -1606,7 +1606,7 @@ function ActionButton({ children, onClick, disabled, variant = "light" }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-extrabold transition disabled:cursor-not-allowed disabled:opacity-45 ${variants[variant]}`}
+      className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-extrabold transition disabled:cursor-not-allowed disabled:opacity-65 ${variants[variant]}`}
     >
       {children}
     </button>
@@ -1618,7 +1618,7 @@ function SummaryRow({ label, value, badge }) {
     <div className="flex items-center justify-between gap-3">
       <span className="font-semibold text-slate-500">{label}</span>
       {badge ? (
-        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-[#2563EB] ring-1 ring-blue-100">
           {value}
         </span>
       ) : (
@@ -1650,7 +1650,7 @@ function MomentMarkerCard({
           </p>
         </div>
 
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[#2563EB] ring-1 ring-blue-100">
           <BookmarkPlus size={20} />
         </div>
       </div>
@@ -1661,13 +1661,13 @@ function MomentMarkerCard({
           placeholder="Judul momen, contoh: Membahas nilai akademik"
           value={markerTitle}
           onChange={(e) => setMarkerTitle(e.target.value)}
-          className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50"
+          className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
         />
 
         <select
           value={markerCategory}
           onChange={(e) => setMarkerCategory(e.target.value)}
-          className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50"
+          className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
         >
           <option value="Akademik">Akademik</option>
           <option value="Keluarga">Keluarga</option>
@@ -1682,13 +1682,13 @@ function MomentMarkerCard({
         placeholder="Catatan konselor, contoh: Mahasiswa terlihat tegang saat membahas nilai semester."
         value={markerNote}
         onChange={(e) => setMarkerNote(e.target.value)}
-        className="mt-3 min-h-24 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50"
+        className="mt-3 min-h-24 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
       />
 
       <button
         type="button"
         onClick={saveMarker}
-        className="mt-3 w-full rounded-2xl bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] px-5 py-3 text-sm font-extrabold text-white shadow-[0_12px_24px_rgba(91,79,233,0.20)] transition hover:brightness-105"
+        className="mt-3 w-full rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] px-5 py-3 text-sm font-extrabold text-white shadow-[0_12px_24px_rgba(37,99,235,0.20)] transition hover:brightness-105"
       >
         Tandai Momen Sekarang
       </button>

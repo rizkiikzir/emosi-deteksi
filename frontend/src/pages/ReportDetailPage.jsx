@@ -53,11 +53,11 @@ const emotionMeta = {
     glow: "shadow-[0_14px_30px_rgba(100,116,139,0.10)]",
   },
   Seri: {
-    bg: "bg-indigo-50",
-    text: "text-indigo-700",
-    border: "border-indigo-200",
-    activeBg: "bg-indigo-50",
-    glow: "shadow-[0_14px_30px_rgba(91,79,233,0.12)]",
+    bg: "bg-blue-50",
+    text: "text-blue-700",
+    border: "border-blue-200",
+    activeBg: "bg-blue-50",
+    glow: "shadow-[0_14px_30px_rgba(37,99,235,0.12)]",
   },
 };
 
@@ -80,7 +80,7 @@ function ReportDetailPage() {
         showSessionStatus={false}
       >
         <div className="rounded-[28px] border border-slate-200/80 bg-white p-10 text-center shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-indigo-50 text-[#5B4FE9] ring-1 ring-indigo-100">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-[#2563EB] ring-1 ring-blue-100">
             <FileText size={28} />
           </div>
 
@@ -96,7 +96,7 @@ function ReportDetailPage() {
           <button
             type="button"
             onClick={() => navigate("/riwayat-laporan")}
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] px-5 py-3 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(91,79,233,0.22)] transition hover:brightness-105"
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] px-5 py-3 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(37,99,235,0.22)] transition hover:brightness-105"
           >
             <ArrowLeft size={16} />
             Kembali ke Riwayat
@@ -159,7 +159,7 @@ function ReportDetailPage() {
         <section className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex min-w-0 items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#EEF2FF] to-[#E6FFFB] text-base font-black text-[#5B4FE9] ring-1 ring-indigo-100">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-sky-50 text-base font-black text-[#2563EB] ring-1 ring-blue-100">
                 {getInitial(studentName)}
               </div>
 
@@ -187,7 +187,7 @@ function ReportDetailPage() {
             <button
               type="button"
               onClick={() => navigate("/riwayat-laporan")}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-[#5B4FE9]"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563EB]"
             >
               <ArrowLeft size={16} />
               Kembali
@@ -200,7 +200,7 @@ function ReportDetailPage() {
             <section className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
               <SectionTitle
                 icon={<Brain size={20} />}
-                iconClass="bg-indigo-50 text-[#5B4FE9] ring-indigo-100"
+                iconClass="bg-blue-50 text-[#2563EB] ring-blue-100"
                 title="Ringkasan Emosi"
                 description="Persentase dan jumlah deteksi emosi selama sesi berlangsung."
               />
@@ -265,7 +265,7 @@ function ReportDetailPage() {
             <section className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
               <SectionTitle
                 icon={<Sparkles size={20} />}
-                iconClass="bg-[#E6FFFB] text-[#0D9488] ring-teal-100"
+                iconClass="bg-blue-50 text-[#2563EB] ring-blue-100"
                 title="Interpretasi Otomatis"
                 description="Analisis awal berdasarkan emosi dominan dan distribusi deteksi."
               />
@@ -314,9 +314,9 @@ function ReportDetailPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
                   <div className="mb-2 flex items-center gap-2">
-                    <Info size={16} className="text-[#5B4FE9]" />
+                    <Info size={16} className="text-[#2563EB]" />
                     <p className="text-sm font-extrabold text-slate-950">
                       Interpretasi Sistem
                     </p>
@@ -359,7 +359,7 @@ function ReportDetailPage() {
                         className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4"
                       >
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-extrabold text-[#5B4FE9] ring-1 ring-indigo-100">
+                          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-extrabold text-[#2563EB] ring-1 ring-blue-100">
                             {marker.timeLabel || marker.time || "-"}
                           </span>
 
@@ -410,7 +410,7 @@ function ReportDetailPage() {
             <section className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
               <SectionTitle
                 icon={<CalendarDays size={20} />}
-                iconClass="bg-indigo-50 text-[#5B4FE9] ring-indigo-100"
+                iconClass="bg-blue-50 text-[#2563EB] ring-blue-100"
                 title="Informasi Sesi"
                 description="Detail identitas dan metadata laporan."
                 compact
@@ -447,9 +447,9 @@ function ReportDetailPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-teal-100 bg-gradient-to-br from-[#E6FFFB] to-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+           <section className="rounded-[28px] border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
               <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#0D9488] shadow-sm ring-1 ring-teal-100">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#2563EB] shadow-sm ring-1 ring-blue-100">
                   <ShieldCheck size={21} />
                 </div>
 
@@ -458,7 +458,7 @@ function ReportDetailPage() {
                     Status Laporan
                   </h3>
 
-                  <p className="mt-2 text-sm font-semibold leading-6 text-teal-900/80">
+                  <p className="mt-2 text-sm font-semibold leading-6 text-blue-900/80">
                     Laporan ini telah tersimpan secara lokal dan dapat digunakan
                     sebagai bahan evaluasi awal oleh konselor.
                   </p>
@@ -466,9 +466,9 @@ function ReportDetailPage() {
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-indigo-100 bg-indigo-50/70 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+            <section className="rounded-[28px] border border-blue-100 bg-blue-50/70 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
               <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-blue-700 shadow-sm ring-1 ring-indigo-100">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#2563EB] shadow-sm ring-1 ring-blue-100">
                   <BarChart3 size={21} />
                 </div>
 
@@ -488,7 +488,7 @@ function ReportDetailPage() {
                       <span className="font-semibold text-blue-900/70">
                         Mode
                       </span>
-                      <strong className="rounded-full bg-white px-3 py-1 text-xs font-extrabold text-[#5B4FE9]">
+                      <strong className="rounded-full bg-white px-3 py-1 text-xs font-extrabold text-[#2563EB] ring-1 ring-blue-100">
                         Real-Time
                       </strong>
                     </div>
