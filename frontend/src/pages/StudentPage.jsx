@@ -12,102 +12,8 @@ import {
   Filter,
   X,
 } from "lucide-react";
-import { fileToBase64, validateImageFile } from "../utils/imageUpload";
-
-const STORAGE_KEY = "studentsData";
-
-const initialStudents = [
-  {
-    id: "STD-001",
-    nim: "2022573010105",
-    name: "Andi Ramadhan",
-    programStudy: "Teknik Informatika",
-    generation: "2022",
-    status: "Aktif",
-    registeredAt: "12 Mar 2024",
-  },
-  {
-    id: "STD-002",
-    nim: "2022573010112",
-    name: "Siti Rahmawati",
-    programStudy: "Teknik Informatika",
-    generation: "2022",
-    status: "Aktif",
-    registeredAt: "15 Mar 2024",
-  },
-  {
-    id: "STD-003",
-    nim: "2022573010118",
-    name: "Muhammad Fikri",
-    programStudy: "Teknik Informatika",
-    generation: "2022",
-    status: "Aktif",
-    registeredAt: "18 Mar 2024",
-  },
-  {
-    id: "STD-004",
-    nim: "2022573010125",
-    name: "Nadia Aulia",
-    programStudy: "Teknik Informatika",
-    generation: "2022",
-    status: "Aktif",
-    registeredAt: "20 Mar 2024",
-  },
-  {
-    id: "STD-005",
-    nim: "2022573010203",
-    name: "Rizky Kurniawan",
-    programStudy: "Teknik Informatika",
-    generation: "2022",
-    status: "Nonaktif",
-    registeredAt: "25 Mar 2024",
-  },
-  {
-    id: "STD-006",
-    nim: "2022573010307",
-    name: "Fadila Ananda",
-    programStudy: "Teknik Informatika",
-    generation: "2022",
-    status: "Aktif",
-    registeredAt: "28 Mar 2024",
-  },
-  {
-    id: "STD-007",
-    nim: "2022573010409",
-    name: "Zahra Humaira",
-    programStudy: "Teknik Informatika",
-    generation: "2022",
-    status: "Nonaktif",
-    registeredAt: "02 Apr 2024",
-  },
-  {
-    id: "STD-008",
-    nim: "2022573020101",
-    name: "Dwi Putra",
-    programStudy: "Teknologi Rekayasa Komputer",
-    generation: "2022",
-    status: "Aktif",
-    registeredAt: "05 Apr 2024",
-  },
-  {
-    id: "STD-009",
-    nim: "2022573020108",
-    name: "Yulia Safitri",
-    programStudy: "Teknologi Rekayasa Komputer",
-    generation: "2022",
-    status: "Aktif",
-    registeredAt: "07 Apr 2024",
-  },
-  {
-    id: "STD-010",
-    nim: "2022573030104",
-    name: "Hafizh Alfarizi",
-    programStudy: "Teknik Elektro",
-    generation: "2022",
-    status: "Aktif",
-    registeredAt: "10 Apr 2024",
-  },
-];
+import { validateImageFile } from "../utils/imageUpload";
+import { getAssetUrl, studentApi } from "../services/api";
 
 const emptyForm = {
   nim: "",
@@ -119,8 +25,32 @@ const emptyForm = {
   photo: "",
 };
 
+const mapStudentFromApi = (student) => ({
+  id: student.id,
+  studentCode: student.student_code,
+  nim: student.nim,
+  name: student.name,
+  programStudy: student.program_study,
+  generation: student.generation,
+  status: student.status,
+  registeredAt: student.registered_at || "-",
+  photo: student.photo_url || "",
+});
+
+const mapStudentToApi = (student) => ({
+  nim: student.nim.trim(),
+  name: student.name.trim(),
+  program_study: student.programStudy.trim(),
+  generation: student.generation.trim() || "-",
+  status: student.status,
+  photo_url: student.photo || null,
+  registered_at: student.registeredAt || null,
+});
+
 function StudentPage() {
   const [students, setStudents] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [keyword, setKeyword] = useState("");
   const [programFilter, setProgramFilter] = useState("Semua");
   const [generationFilter, setGenerationFilter] = useState("Semua");
@@ -132,21 +62,23 @@ function StudentPage() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [formData, setFormData] = useState(emptyForm);
 
-  useEffect(() => {
-    const saved = safeParse(localStorage.getItem(STORAGE_KEY));
+  const loadStudents = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
 
-    if (Array.isArray(saved) && saved.length > 0) {
-      setStudents(saved);
-    } else {
-      setStudents(initialStudents);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialStudents));
+      const data = await studentApi.getAll();
+      setStudents(data.map(mapStudentFromApi));
+    } catch (error) {
+      setErrorMessage(error.message || "Gagal memuat data mahasiswa.");
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
-
-  const saveStudents = (nextStudents) => {
-    setStudents(nextStudents);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextStudents));
   };
+
+  useEffect(() => {
+    loadStudents();
+  }, []);
 
   const programOptions = useMemo(() => {
     return [
@@ -258,15 +190,24 @@ function StudentPage() {
       return;
     }
 
-    const base64Photo = await fileToBase64(file);
+    try {
+      setIsLoading(true);
 
-    setFormData((current) => ({
-      ...current,
-      photo: base64Photo,
-    }));
+      const result = await studentApi.uploadPhoto(file);
+
+      setFormData((current) => ({
+        ...current,
+        photo: result.photo_url,
+      }));
+    } catch (error) {
+      alert(error.message || "Gagal mengupload foto mahasiswa.");
+    } finally {
+      setIsLoading(false);
+      event.target.value = "";
+    }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       !formData.nim.trim() ||
       !formData.name.trim() ||
@@ -276,71 +217,44 @@ function StudentPage() {
       return;
     }
 
-    if (modalMode === "add") {
-      const duplicatedNim = students.some(
-        (student) => student.nim === formData.nim.trim()
-      );
+    try {
+      setIsLoading(true);
 
-      if (duplicatedNim) {
-        alert("NIM sudah terdaftar.");
+      if (modalMode === "add") {
+        await studentApi.create(mapStudentToApi(formData));
+        await loadStudents();
+        closeModal();
         return;
       }
 
-      const newStudent = {
-        id: `STD-${Date.now()}`,
-        nim: formData.nim.trim(),
-        name: formData.name.trim(),
-        programStudy: formData.programStudy.trim(),
-        generation: formData.generation.trim() || "-",
-        status: formData.status,
-        registeredAt: formData.registeredAt || getTodayDisplay(),
-        photo: formData.photo || "",
-      };
-
-      saveStudents([newStudent, ...students]);
-      closeModal();
-      return;
-    }
-
-    if (modalMode === "edit" && selectedStudent) {
-      const duplicatedNim = students.some(
-        (student) =>
-          student.nim === formData.nim.trim() && student.id !== selectedStudent.id
-      );
-
-      if (duplicatedNim) {
-        alert("NIM sudah digunakan mahasiswa lain.");
-        return;
+      if (modalMode === "edit" && selectedStudent) {
+        await studentApi.update(selectedStudent.id, mapStudentToApi(formData));
+        await loadStudents();
+        closeModal();
       }
-
-      const updatedStudents = students.map((student) =>
-        student.id === selectedStudent.id
-          ? {
-            ...student,
-            nim: formData.nim.trim(),
-            name: formData.name.trim(),
-            programStudy: formData.programStudy.trim(),
-            generation: formData.generation.trim() || "-",
-            status: formData.status,
-            registeredAt: formData.registeredAt || student.registeredAt,
-            photo: formData.photo || "",
-          }
-          : student
-      );
-
-      saveStudents(updatedStudents);
-      closeModal();
+    } catch (error) {
+      alert(error.message || "Gagal menyimpan data mahasiswa.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDelete = (student) => {
+  const handleDelete = async (student) => {
     const confirmDelete = window.confirm(
       `Yakin ingin menghapus data mahasiswa ${student.name}?`
     );
 
     if (!confirmDelete) return;
 
-    saveStudents(students.filter((item) => item.id !== student.id));
+    try {
+      setIsLoading(true);
+      await studentApi.remove(student.id);
+      await loadStudents();
+    } catch (error) {
+      alert(error.message || "Gagal menghapus data mahasiswa.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const resetFilter = () => {
@@ -365,6 +279,17 @@ function StudentPage() {
       showSessionStatus={false}
     >
       <div className="space-y-5">
+        {errorMessage && (
+          <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+            {errorMessage}
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
+            Memuat data mahasiswa...
+          </div>
+        )}
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard
             icon={<Users size={21} />}
@@ -764,7 +689,7 @@ function StudentModal({
               <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-50 text-xl font-black text-[#2563EB] ring-1 ring-blue-100">
                 {formData.photo ? (
                   <img
-                    src={formData.photo}
+                    src={getAssetUrl(formData.photo)}
                     alt={formData.name || "Mahasiswa"}
                     className="h-full w-full object-cover"
                   />
@@ -952,14 +877,6 @@ function getTodayDisplay() {
     month: "short",
     year: "numeric",
   });
-}
-
-function safeParse(value) {
-  try {
-    return value ? JSON.parse(value) : null;
-  } catch {
-    return null;
-  }
 }
 
 export default StudentPage;

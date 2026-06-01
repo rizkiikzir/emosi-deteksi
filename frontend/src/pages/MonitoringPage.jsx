@@ -1,3 +1,4 @@
+import { monitoringApi, sessionApi } from "../services/api";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -193,6 +194,8 @@ function MonitoringPage() {
 
   const hasValidSession = isValidMonitoringSession(sessionInfo);
 
+  const dbSessionId = Number(sessionInfo?.id);
+
   const [durationTick, setDurationTick] = useState(0);
 
   useEffect(() => {
@@ -325,6 +328,74 @@ function MonitoringPage() {
     )}:${String(seconds).padStart(2, "0")}`;
   };
 
+  useEffect(() => {
+    if (!dbSessionId) return;
+
+    const loadMonitoringData = async () => {
+      try {
+        const [emotionLogs, savedMarkers] = await Promise.all([
+          monitoringApi.getEmotionLogs(dbSessionId),
+          monitoringApi.getMarkers(dbSessionId),
+        ]);
+
+        const loadedChartPoints = emotionLogs
+          .map((item) => {
+            const emotionY = emotionToY[item.emotion];
+
+            if (emotionY === undefined) return null;
+
+            return {
+              x: item.timestamp_second,
+              y: emotionY,
+              emotion: item.emotion,
+              confidence: item.confidence,
+            };
+          })
+          .filter(Boolean);
+
+        const loadedLogs = emotionLogs
+          .slice()
+          .reverse()
+          .slice(0, 8)
+          .map((item) => ({
+            time: new Date(item.detected_at).toLocaleTimeString(),
+            emotion: item.emotion,
+            confidence: item.confidence,
+          }));
+
+        const loadedMarkers = savedMarkers.map((item) => ({
+          id: item.id,
+          timeSecond: item.timestamp_second,
+          timeLabel:
+            item.timestamp_second < 60
+              ? `Detik ke-${item.timestamp_second}`
+              : `Menit ${formatSecondToTime(item.timestamp_second).slice(3)}`,
+          title: item.title,
+          category: item.category,
+          note: item.note,
+        }));
+
+        setChartPoints(loadedChartPoints);
+        setLogs(loadedLogs);
+        setMarkers(loadedMarkers);
+
+        if (loadedChartPoints.length > 0) {
+          const lastSecond = Math.max(
+            ...loadedChartPoints.map((point) => point.x)
+          );
+
+          secondCounterRef.current = lastSecond + 1;
+          setDurationTick(lastSecond + 1);
+        }
+      } catch (error) {
+        console.error("Gagal memuat data monitoring dari database:", error);
+      }
+    };
+
+    loadMonitoringData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbSessionId]);
+
   const loadCameraDevices = async () => {
     try {
       const tempStream = await navigator.mediaDevices.getUserMedia({
@@ -450,7 +521,7 @@ function MonitoringPage() {
     hasLoadedProgressRef.current = true;
   };
 
-  const saveMarker = () => {
+  const saveMarker = async () => {
     if (!isMonitoring && chartPoints.length === 0) {
       alert("Mulai monitoring terlebih dahulu sebelum menandai momen.");
       return;
@@ -477,11 +548,35 @@ function MonitoringPage() {
       note: markerNote,
     };
 
-    setMarkers((prev) => [...prev, newMarker]);
+    try {
+      if (dbSessionId) {
+        const savedMarker = await monitoringApi.createMarker({
+          session_id: dbSessionId,
+          timestamp_second: currentSecond,
+          title: markerTitle.trim(),
+          category: markerCategory,
+          note: markerNote.trim(),
+          dominant_emotion_after_marker:
+            currentEmotion && currentEmotion !== "-" ? currentEmotion : null,
+        });
 
-    setMarkerTitle("");
-    setMarkerCategory("Akademik");
-    setMarkerNote("");
+        setMarkers((prev) => [
+          ...prev,
+          {
+            ...newMarker,
+            id: savedMarker.id,
+          },
+        ]);
+      } else {
+        setMarkers((prev) => [...prev, newMarker]);
+      }
+
+      setMarkerTitle("");
+      setMarkerCategory("Akademik");
+      setMarkerNote("");
+    } catch (error) {
+      alert(error.message || "Gagal menyimpan momen konseling.");
+    }
   };
 
   const analyzeMarkerEmotion = (marker) => {
@@ -680,7 +775,7 @@ function MonitoringPage() {
     };
   };
 
-  const finishSession = () => {
+  const finishSession = async () => {
     setIsMonitoring(false);
 
     if (!hasValidSession) {
@@ -694,6 +789,17 @@ function MonitoringPage() {
     if (chartPoints.length === 0) {
       alert("Belum ada data deteksi untuk dibuat laporan.");
       return;
+    }
+
+    if (dbSessionId) {
+      try {
+        await sessionApi.update(dbSessionId, {
+          status: "Selesai",
+          actual_duration: formatSecondToTime(secondCounterRef.current),
+        });
+      } catch (error) {
+        console.error("Gagal mengupdate status sesi:", error);
+      }
     }
 
     const report = buildSessionReport();
@@ -824,15 +930,30 @@ function MonitoringPage() {
 
         setLogs((prev) => [newLog, ...prev].slice(0, 8));
 
-        setChartPoints((prev) => [
-          ...prev,
-          {
-            x: secondCounterRef.current,
-            y: emotionY,
-            emotion,
-            confidence: result.confidence,
-          },
-        ]);
+        const timestampSecond = secondCounterRef.current;
+
+        const newPoint = {
+          x: timestampSecond,
+          y: emotionY,
+          emotion,
+          confidence: result.confidence,
+        };
+
+        setChartPoints((prev) => [...prev, newPoint]);
+
+        if (dbSessionId) {
+          try {
+            await monitoringApi.createEmotionLog({
+              session_id: dbSessionId,
+              timestamp_second: timestampSecond,
+              emotion,
+              confidence: Number(result.confidence || 0),
+              probabilities_json: JSON.stringify(result.scores || {}),
+            });
+          } catch (error) {
+            console.error("Gagal menyimpan emotion log:", error);
+          }
+        }
 
         secondCounterRef.current += 1;
         setDurationTick(secondCounterRef.current);

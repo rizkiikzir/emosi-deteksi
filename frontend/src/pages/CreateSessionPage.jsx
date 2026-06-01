@@ -1,3 +1,4 @@
+import { sessionApi, studentApi } from "../services/api";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
@@ -18,8 +19,6 @@ import {
   ArrowRight,
   ClipboardCheck,
 } from "lucide-react";
-
-const STUDENTS_STORAGE_KEY = "studentsData";
 
 const DEFAULT_FORM = {
   studentId: "",
@@ -76,20 +75,44 @@ const DETECTED_EMOTIONS = [
   { name: "Netral", bg: "bg-slate-50", ring: "ring-slate-100" },
 ];
 
+const mapStudentFromApi = (student) => ({
+  id: student.id,
+  studentCode: student.student_code,
+  nim: student.nim,
+  name: student.name,
+  programStudy: student.program_study,
+  generation: student.generation,
+  status: student.status,
+  registeredAt: student.registered_at || "-",
+  photo: student.photo_url || "",
+});
+
 function CreateSessionPage() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
   const [students, setStudents] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [studentKeyword, setStudentKeyword] = useState("");
   const [formData, setFormData] = useState(DEFAULT_FORM);
 
   useEffect(() => {
-    const savedStudents = safeParse(localStorage.getItem(STUDENTS_STORAGE_KEY));
+    const loadStudents = async () => {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
 
-    if (Array.isArray(savedStudents)) {
-      setStudents(savedStudents);
-    }
+        const data = await studentApi.getAll();
+        setStudents(data.map(mapStudentFromApi));
+      } catch (error) {
+        setErrorMessage(error.message || "Gagal memuat data mahasiswa.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStudents();
   }, []);
 
   const filteredStudents = useMemo(() => {
@@ -225,51 +248,75 @@ function CreateSessionPage() {
     return `KS-${Date.now().toString().slice(-8)}`;
   };
 
-  const handleStartMonitoring = () => {
-    const sessionId = generateSessionId();
+  const handleStartMonitoring = async () => {
+    try {
+      setIsLoading(true);
 
-    const newSession = {
-      id: sessionId,
-      sessionId,
+      const payload = {
+        student_id: Number(formData.studentId),
+        counselor_id: null,
 
-      studentId: formData.studentId,
-      studentName: formData.studentName.trim(),
-      nim: formData.nim.trim(),
-      programStudy: formData.programStudy.trim(),
-      counselorName: formData.counselorName.trim(),
+        title: formData.title.trim(),
+        counseling_type: formData.counselingType,
+        topic: formData.topic.trim(),
+        goal: formData.purpose.trim(),
+        initial_note: formData.initialNote.trim(),
+        location: formData.location.trim(),
 
-      title: formData.title.trim(),
-      counselingType: formData.counselingType,
-      topic: formData.topic.trim(),
-      method: formData.method,
-      location: formData.location.trim(),
-      purpose: formData.purpose.trim(),
-      initialNote: formData.initialNote.trim(),
+        scheduled_date: formData.date,
+        scheduled_time: formData.startTime,
+        estimated_duration: formatDuration(formData.duration),
+        actual_duration: null,
 
-      startDate: formatDateForDisplay(formData.date),
-      startTime: formData.startTime,
-      duration: formData.duration,
+        status: "Berjalan",
+      };
 
-      modelName: "LightExNet V2",
-      detectedEmotions: ["Senang", "Sedih", "Marah", "Takut", "Netral"],
+      const savedSession = await sessionApi.create(payload);
 
-      status: "Berjalan",
-      createdAt: new Date().toISOString(),
-    };
+      const monitoringSession = {
+        id: savedSession.id,
+        sessionId: savedSession.session_code,
 
-    const existingSessions =
-      safeParse(localStorage.getItem("counselingSessions")) || [];
+        studentId: savedSession.student_id,
+        studentName: savedSession.student_name,
+        nim: savedSession.student_nim,
+        programStudy: savedSession.student_program_study,
+        counselorName: formData.counselorName.trim(),
 
-    const updatedSessions = [newSession, ...existingSessions];
+        title: savedSession.title,
+        counselingType: savedSession.counseling_type,
+        topic: savedSession.topic,
+        method: formData.method,
+        location: savedSession.location,
+        purpose: savedSession.goal,
+        initialNote: savedSession.initial_note,
 
-    localStorage.setItem("counselingSessions", JSON.stringify(updatedSessions));
-    localStorage.setItem("currentCounselingSession", JSON.stringify(newSession));
+        startDate: formatDateForDisplay(savedSession.scheduled_date),
+        startTime: savedSession.scheduled_time,
+        duration: savedSession.estimated_duration,
 
-    navigate("/monitoring", {
-      state: {
-        session: newSession,
-      },
-    });
+        modelName: "LightExNet V2",
+        detectedEmotions: ["Senang", "Sedih", "Marah", "Takut", "Netral"],
+
+        status: savedSession.status,
+        createdAt: savedSession.created_at,
+      };
+
+      localStorage.setItem(
+        "currentCounselingSession",
+        JSON.stringify(monitoringSession)
+      );
+
+      navigate("/monitoring", {
+        state: {
+          session: monitoringSession,
+        },
+      });
+    } catch (error) {
+      alert(error.message || "Gagal membuat sesi konseling.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -279,6 +326,17 @@ function CreateSessionPage() {
       showSessionStatus={false}
     >
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        {errorMessage && (
+          <div className="xl:col-span-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+            {errorMessage}
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="xl:col-span-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
+            Memproses data sesi konseling...
+          </div>
+        )}
         <main className="space-y-5">
           <StepProgress steps={STEPS} activeStep={step} />
 
@@ -1001,14 +1059,6 @@ function getInitial(name) {
     .map((word) => word[0])
     .join("")
     .toUpperCase();
-}
-
-function safeParse(value) {
-  try {
-    return value ? JSON.parse(value) : null;
-  } catch {
-    return null;
-  }
 }
 
 export default CreateSessionPage;

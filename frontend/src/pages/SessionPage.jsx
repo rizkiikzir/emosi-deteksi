@@ -1,3 +1,4 @@
+import { sessionApi } from "../services/api";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
@@ -14,99 +15,39 @@ import {
 } from "lucide-react";
 
 const CURRENT_SESSION_KEY = "currentCounselingSession";
-const SESSIONS_STORAGE_KEY = "counselingSessions";
 
-const SAMPLE_SESSIONS = [
-  {
-    id: "KS-24052026-001",
-    sessionId: "KS-24052026-001",
-    studentName: "Andi Ramadhan",
-    nim: "2022573010105",
-    programStudy: "Teknik Informatika",
-    topic: "Konseling Akademik",
-    counselingType: "Konseling Akademik",
-    counselorName: "Hendrawaty, ST., MT",
-    startDate: "24 Mei 2026",
-    startTime: "09:00",
-    duration: "00:30:00",
-    status: "Berjalan",
-  },
-  {
-    id: "KS-24052026-002",
-    sessionId: "KS-24052026-002",
-    studentName: "Siti Rahmawati",
-    nim: "2022573010112",
-    programStudy: "Teknik Informatika",
-    topic: "Kecemasan Ujian",
-    counselingType: "Konseling Akademik",
-    counselorName: "Hendrawaty, ST., MT",
-    startDate: "24 Mei 2026",
-    startTime: "10:30",
-    duration: "00:45:00",
-    status: "Dijadwalkan",
-  },
-  {
-    id: "KS-23052026-015",
-    sessionId: "KS-23052026-015",
-    studentName: "Muhammad Fikri",
-    nim: "2022573010118",
-    programStudy: "Teknik Informatika",
-    topic: "Konseling Pribadi",
-    counselingType: "Konseling Pribadi",
-    counselorName: "Hendrawaty, ST., MT",
-    startDate: "23 Mei 2026",
-    startTime: "13:00",
-    duration: "00:25:00",
-    status: "Selesai",
-  },
-  {
-    id: "KS-22052026-011",
-    sessionId: "KS-22052026-011",
-    studentName: "Nadia Aulia",
-    nim: "2022573010125",
-    programStudy: "Teknik Informatika",
-    topic: "Adaptasi Kuliah",
-    counselingType: "Konseling Akademik",
-    counselorName: "Hendrawaty, ST., MT",
-    startDate: "22 Mei 2026",
-    startTime: "08:15",
-    duration: "00:20:00",
-    status: "Selesai",
-  },
-  {
-    id: "KS-21052026-007",
-    sessionId: "KS-21052026-007",
-    studentName: "Rizky Kurniawan",
-    nim: "2022573010203",
-    programStudy: "Teknik Informatika",
-    topic: "Konsultasi Pribadi",
-    counselingType: "Konseling Pribadi",
-    counselorName: "Hendrawaty, ST., MT",
-    startDate: "21 Mei 2026",
-    startTime: "14:00",
-    duration: "00:35:00",
-    status: "Dibatalkan",
-  },
-  {
-    id: "KS-21052026-006",
-    sessionId: "KS-21052026-006",
-    studentName: "Fadila Ananda",
-    nim: "2022573010307",
-    programStudy: "Teknik Informatika",
-    topic: "Perencanaan Studi",
-    counselingType: "Konseling Karier",
-    counselorName: "Hendrawaty, ST., MT",
-    startDate: "21 Mei 2026",
-    startTime: "11:00",
-    duration: "00:40:00",
-    status: "Selesai",
-  },
-];
+const mapSessionFromApi = (session) => ({
+  id: session.id,
+  sessionId: session.session_code,
+
+  studentId: session.student_id,
+  studentName: session.student_name || "-",
+  nim: session.student_nim || "-",
+  programStudy: session.student_program_study || "-",
+
+  topic: session.topic || session.title || "-",
+  title: session.title || "-",
+  counselingType: session.counseling_type || "-",
+  counselorName: "Konselor / Admin",
+
+  startDate: formatDateDisplay(session.scheduled_date),
+  startTime: session.scheduled_time || "-",
+  duration: session.estimated_duration || "-",
+
+  status: session.status || "Terjadwal",
+
+  location: session.location || "-",
+  purpose: session.goal || "",
+  initialNote: session.initial_note || "",
+  createdAt: session.created_at,
+});
 
 function SessionPage() {
   const navigate = useNavigate();
 
   const [sessions, setSessions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [keyword, setKeyword] = useState("");
   const [dateFilter, setDateFilter] = useState("Semua Tanggal");
   const [statusFilter, setStatusFilter] = useState("Semua Status");
@@ -115,27 +56,22 @@ function SessionPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const loadSessions = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      const data = await sessionApi.getAll();
+      setSessions(data.map(mapSessionFromApi));
+    } catch (error) {
+      setErrorMessage(error.message || "Gagal memuat data sesi konseling.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const collectedSessions = [];
-
-    const savedSessions = safeParse(localStorage.getItem(SESSIONS_STORAGE_KEY));
-    const currentSession = safeParse(localStorage.getItem(CURRENT_SESSION_KEY));
-
-    if (Array.isArray(savedSessions)) {
-      savedSessions.forEach((session) => {
-        collectedSessions.push(normalizeSession(session));
-      });
-    }
-
-    if (currentSession) {
-      collectedSessions.unshift(normalizeSession(currentSession, "Berjalan"));
-    }
-
-    if (collectedSessions.length > 0) {
-      setSessions(removeDuplicateSessions(collectedSessions));
-    } else {
-      setSessions(SAMPLE_SESSIONS);
-    }
+    loadSessions();
   }, []);
 
   const dateOptions = useMemo(() => {
@@ -282,32 +218,6 @@ function SessionPage() {
   const handleViewSession = (session) => {
     localStorage.setItem("selectedSessionDetail", JSON.stringify(session));
 
-    if (session.status === "Selesai") {
-      const reports = safeParse(localStorage.getItem("sessionReports")) || [];
-
-      const matchedReport = Array.isArray(reports)
-        ? reports.find((report) => {
-          return (
-            report.sessionId === session.sessionId ||
-            report.sessionInfo?.sessionId === session.sessionId
-          );
-        })
-        : null;
-
-      if (!matchedReport) {
-        alert("Laporan untuk sesi ini belum ditemukan.");
-        return;
-      }
-
-      navigate("/laporan-sesi", {
-        state: {
-          report: matchedReport,
-        },
-      });
-
-      return;
-    }
-
     navigate("/monitoring", {
       state: {
         session,
@@ -315,24 +225,28 @@ function SessionPage() {
     });
   };
 
-  const handleDeleteSession = (session) => {
+  const handleDeleteSession = async (session) => {
     const confirmDelete = window.confirm(
       `Yakin ingin menghapus sesi ${session.sessionId}?`
     );
 
     if (!confirmDelete) return;
 
-    const nextSessions = sessions.filter(
-      (item) => item.sessionId !== session.sessionId
-    );
+    try {
+      setIsLoading(true);
 
-    setSessions(nextSessions);
-    localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(nextSessions));
+      await sessionApi.remove(session.id);
+      await loadSessions();
 
-    const currentSession = safeParse(localStorage.getItem(CURRENT_SESSION_KEY));
+      const currentSession = safeParse(localStorage.getItem(CURRENT_SESSION_KEY));
 
-    if (currentSession?.sessionId === session.sessionId) {
-      localStorage.removeItem(CURRENT_SESSION_KEY);
+      if (currentSession?.id === session.id || currentSession?.sessionId === session.sessionId) {
+        localStorage.removeItem(CURRENT_SESSION_KEY);
+      }
+    } catch (error) {
+      alert(error.message || "Gagal menghapus sesi konseling.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -342,6 +256,17 @@ function SessionPage() {
       subtitle="Dashboard > Sesi Konseling"
       showSessionStatus={false}
     >
+      {errorMessage && (
+        <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+          {errorMessage}
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
+          Memuat data sesi konseling...
+        </div>
+      )}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard
           icon={<CalendarDays size={21} />}
