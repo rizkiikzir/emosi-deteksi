@@ -1,7 +1,7 @@
-import { monitoringApi, sessionApi } from "../services/api";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { monitoringApi, reportApi, sessionApi } from "../services/api";
 import { getEmotionIcon } from "../utils/emotionIcons";
 import AppLayout from "../components/AppLayout";
 
@@ -791,64 +791,52 @@ function MonitoringPage() {
       return;
     }
 
+    let reportFromApi = null;
+
     if (dbSessionId) {
       try {
         await sessionApi.update(dbSessionId, {
           status: "Selesai",
           actual_duration: formatSecondToTime(secondCounterRef.current),
         });
+
+        reportFromApi = await reportApi.generate(dbSessionId);
       } catch (error) {
-        console.error("Gagal mengupdate status sesi:", error);
+        console.error("Gagal membuat laporan dari database:", error);
+        alert(error.message || "Gagal membuat laporan dari database.");
+        return;
       }
     }
 
-    const report = buildSessionReport();
-    const reportId = `RPT-${Date.now()}`;
+    const report =
+      reportFromApi ||
+      {
+        ...buildSessionReport(),
+        id: `RPT-${Date.now()}`,
+        reportId: `RPT-${Date.now()}`,
+        sessionId: sessionInfo.sessionId,
+        createdAt: new Date().toISOString(),
+        status: "Selesai",
+      };
 
     const reportWithMeta = {
       ...report,
-      id: reportId,
-      reportId,
-      sessionId: sessionInfo.sessionId,
-      createdAt: new Date().toISOString(),
+      id: report.id,
+      reportId: report.reportId || report.report_code || report.id,
+      sessionId: report.sessionId || report.session_id || sessionInfo.sessionId,
+      createdAt: report.createdAt || report.created_at || new Date().toISOString(),
       status: "Selesai",
     };
 
-    localStorage.setItem("latestSessionReport", JSON.stringify(reportWithMeta));
-
-    const savedReports = JSON.parse(
-      localStorage.getItem("sessionReports") || "[]"
-    );
-
-    const updatedReports = [reportWithMeta, ...savedReports];
-
-    localStorage.setItem("sessionReports", JSON.stringify(updatedReports));
-
-    const savedSessions = JSON.parse(
-      localStorage.getItem("counselingSessions") || "[]"
-    );
-
-    const finishedSession = {
-      ...sessionInfo,
-      status: "Selesai",
-      duration: formatSecondToTime(secondCounterRef.current),
-      reportId,
-      finishedAt: new Date().toISOString(),
-    };
-
-    const updatedSessions = savedSessions.map((session) => {
-      const sameSession =
-        session.sessionId === sessionInfo.sessionId ||
-        session.id === sessionInfo.id;
-
-      return sameSession ? { ...session, ...finishedSession } : session;
-    });
-
-    localStorage.setItem("counselingSessions", JSON.stringify(updatedSessions));
     localStorage.removeItem("currentCounselingSession");
-    localStorage.removeItem(getMonitoringProgressKey(sessionInfo.sessionId));
 
-    navigate("/laporan-sesi", {
+    if (sessionInfo?.sessionId) {
+      localStorage.removeItem(getMonitoringProgressKey(sessionInfo.sessionId));
+    }
+
+    stopCamera();
+
+    navigate(`/laporan-sesi?reportId=${reportWithMeta.id}`, {
       state: {
         report: reportWithMeta,
       },

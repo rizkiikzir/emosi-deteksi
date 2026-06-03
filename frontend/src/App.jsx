@@ -12,9 +12,9 @@ import ReportDetailPage from "./pages/ReportDetailPage";
 import ProfilePage from "./pages/ProfilePage";
 
 function ProtectedRoute({ children }) {
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const user = localStorage.getItem("serinUser");
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
@@ -22,9 +22,9 @@ function ProtectedRoute({ children }) {
 }
 
 function PublicRoute({ children }) {
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const user = localStorage.getItem("serinUser");
 
-  if (isAuthenticated) {
+  if (user) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -74,6 +74,15 @@ function App() {
         />
 
         <Route
+          path="/sesi-konseling"
+          element={
+            <ProtectedRoute>
+              <SessionPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/monitoring"
           element={
             <ProtectedRoute>
@@ -87,15 +96,6 @@ function App() {
           element={
             <ProtectedRoute>
               <SessionReportPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/sesi-konseling"
-          element={
-            <ProtectedRoute>
-              <SessionPage />
             </ProtectedRoute>
           }
         />
@@ -118,17 +118,16 @@ function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/mahasiswa" element={<StudentPage />} />
-        <Route path="/buat-sesi" element={<CreateSessionPage />} />
-        <Route path="/monitoring" element={<MonitoringPage />} />
-        <Route path="/laporan-sesi" element={<SessionReportPage />} />
-        <Route path="/sesi-konseling" element={<SessionPage />} />
-        <Route path="/riwayat-laporan" element={<ReportHistoryPage />} />
-        <Route path="/detail-laporan/:id" element={<ReportDetailPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );

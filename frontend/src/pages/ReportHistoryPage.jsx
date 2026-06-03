@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { getEmotionIcon } from "../utils/emotionIcons";
+import { reportApi } from "../services/api";
 import {
   Search,
   FileText,
@@ -37,6 +38,8 @@ function ReportHistoryPage() {
   const navigate = useNavigate();
 
   const [reports, setReports] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [keyword, setKeyword] = useState("");
   const [dateFilter, setDateFilter] = useState("Semua Tanggal");
   const [counselorFilter, setCounselorFilter] = useState("Semua Konselor");
@@ -45,63 +48,142 @@ function ReportHistoryPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    const savedReports = JSON.parse(
-      localStorage.getItem("sessionReports") || "[]"
-    );
+  const loadReports = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
 
-    setReports(savedReports);
+      const data = await reportApi.getAll();
+      setReports(data);
+    } catch (error) {
+      setErrorMessage(error.message || "Gagal memuat riwayat laporan.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReports();
   }, []);
 
   const normalizedReports = useMemo(() => {
     return reports.map((report, index) => {
-      const sessionInfo = report.sessionInfo || {};
-      const dominant = report.dominantEmotion || "-";
+      const sessionInfo = report.sessionInfo || report.session_info || {};
+      const emotionSummary = parseJson(report.emotion_summary_json);
+
+      const dominant =
+        report.dominantEmotion ||
+        report.dominant_emotion ||
+        report.dominant_emotion_label ||
+        "-";
+
       const dominantMain = formatEmotionMain(dominant);
       const dominantDetail = formatEmotionDetail(dominant);
+
+      const dominantPercent =
+        report.dominantPercent ||
+        report.dominant_percentage ||
+        getDominantPercent(report, dominant) ||
+        emotionSummary?.percentages?.[dominantMain] ||
+        "0.0";
 
       return {
         ...report,
         no: index + 1,
-        id: report.id || `KS-${Date.now()}-${index}`,
+
+        id: report.id,
+        reportId: report.reportId || report.report_code || `RPT-${report.id}`,
+
         sessionId:
           report.sessionId ||
-          report.sessionInfo?.sessionId ||
-          report.id ||
-          `KS-${Date.now()}-${index}`,
-        studentName: sessionInfo.studentName || report.studentName || "-",
-        nim: sessionInfo.nim || report.nim || "-",
-        programStudy: sessionInfo.programStudy || report.programStudy || "-",
+          report.session_id_code ||
+          report.session_code ||
+          sessionInfo.sessionId ||
+          sessionInfo.session_code ||
+          `KS-${String(report.session_id || report.id).padStart(4, "0")}`,
+
+        studentName:
+          sessionInfo.studentName ||
+          sessionInfo.student_name ||
+          report.studentName ||
+          report.student_name ||
+          "-",
+
+        nim:
+          sessionInfo.nim ||
+          sessionInfo.student_nim ||
+          report.nim ||
+          report.student_nim ||
+          "-",
+
+        programStudy:
+          sessionInfo.programStudy ||
+          sessionInfo.program_study ||
+          report.programStudy ||
+          report.program_study ||
+          "-",
+
         topic:
           sessionInfo.topic ||
           report.topic ||
           sessionInfo.title ||
           report.title ||
           "-",
+
         counselor:
           sessionInfo.counselorName ||
+          sessionInfo.counselor_name ||
           report.counselor ||
-          "Hendrawaty, ST., MT",
-        date: sessionInfo.startDate || report.date || "-",
-        time: sessionInfo.startTime || report.time || "-",
+          report.counselor_name ||
+          "Konselor / Admin",
+
+        date:
+          sessionInfo.startDate ||
+          sessionInfo.scheduled_date ||
+          report.date ||
+          report.scheduled_date ||
+          formatDateFromIso(report.created_at || report.createdAt) ||
+          "-",
+
+        time:
+          sessionInfo.startTime ||
+          sessionInfo.scheduled_time ||
+          report.time ||
+          report.scheduled_time ||
+          "-",
+
         duration:
           report.duration ||
           report.totalDuration ||
           report.sessionDuration ||
-          report.sessionInfo?.duration ||
+          report.actual_duration ||
+          sessionInfo.duration ||
+          sessionInfo.actual_duration ||
           (report.durationSecond
             ? secondsToDuration(report.durationSecond)
             : "00:00:00"),
+
         dominantEmotion: dominant,
         dominantMain,
         dominantDetail,
-        dominantPercent:
-          getDominantPercent(report, dominant) ||
-          report.dominantPercent ||
-          "0.0",
-        accuracy: report.accuracy || "92.41",
-        total: report.total || report.totalDetected || 0,
-        createdAt: report.createdAt,
+
+        dominantPercent: Number(dominantPercent).toFixed(1),
+
+        accuracy:
+          report.accuracy ||
+          report.model_accuracy ||
+          "92.41",
+
+        total:
+          report.total ||
+          report.totalDetected ||
+          report.total_detections ||
+          emotionSummary?.total ||
+          0,
+
+        createdAt:
+          report.createdAt ||
+          report.created_at,
       };
     });
   }, [reports]);
@@ -203,8 +285,6 @@ function ReportHistoryPage() {
   const mostDominantEmotion = getMostDominantEmotion(normalizedReports);
 
   const openDetail = (report) => {
-    localStorage.setItem("selectedSessionReport", JSON.stringify(report));
-
     navigate(`/detail-laporan/${report.id}`, {
       state: {
         report,
@@ -212,22 +292,22 @@ function ReportHistoryPage() {
     });
   };
 
-  const deleteReport = (id) => {
+  const deleteReport = async (id) => {
     const confirmDelete = window.confirm(
-      "Yakin ingin menghapus laporan ini dari riwayat?"
+      "Yakin ingin menghapus laporan ini dari database?"
     );
 
     if (!confirmDelete) return;
 
-    const updatedReports = reports.filter((report) => report.id !== id);
+    try {
+      setIsLoading(true);
 
-    setReports(updatedReports);
-    localStorage.setItem("sessionReports", JSON.stringify(updatedReports));
-
-    const latest = JSON.parse(localStorage.getItem("latestSessionReport"));
-
-    if (latest?.id === id) {
-      localStorage.removeItem("latestSessionReport");
+      await reportApi.remove(id);
+      await loadReports();
+    } catch (error) {
+      alert(error.message || "Gagal menghapus laporan.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -255,6 +335,17 @@ function ReportHistoryPage() {
       showSessionStatus={false}
     >
       <div className="space-y-5">
+        {errorMessage && (
+          <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+            {errorMessage}
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
+            Memuat riwayat laporan...
+          </div>
+        )}
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard
             icon={<FileText size={21} />}
@@ -795,6 +886,28 @@ function shortSessionId(id) {
   }
 
   return text.length > 14 ? `${text.slice(0, 4)}-${text.slice(-8)}` : text;
+}
+
+function parseJson(value) {
+  if (!value) return null;
+
+  if (typeof value === "object") return value;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function formatDateFromIso(value) {
+  if (!value) return null;
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date.toISOString().slice(0, 10);
 }
 
 function matchDateFilter(report, filter) {

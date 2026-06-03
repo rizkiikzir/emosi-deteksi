@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import jsPDF from "jspdf";
-import { useLocation } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { getEmotionIcon } from "../utils/emotionIcons";
+import { reportApi } from "../services/api";
 
 import {
   CalendarDays,
@@ -30,13 +31,55 @@ ChartJS.register(LinearScale, PointElement, Tooltip, Legend);
 
 function SessionReportPage() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const reportRef = useRef(null);
+
   const [isDownloading, setIsDownloading] = useState(false);
+  const [report, setReport] = useState(location.state?.report || null);
+  const [isLoadingReport, setIsLoadingReport] = useState(false);
+  const [reportError, setReportError] = useState("");
 
-  const savedReport = localStorage.getItem("latestSessionReport");
+  const reportId = searchParams.get("reportId");
+  const sessionId = searchParams.get("sessionId");
 
-  const report =
-    location.state?.report || (savedReport ? JSON.parse(savedReport) : null);
+  useEffect(() => {
+    if (report) return;
+
+    const loadReport = async () => {
+      try {
+        setIsLoadingReport(true);
+        setReportError("");
+
+        let data = null;
+
+        if (reportId) {
+          data = await reportApi.getById(reportId);
+        } else if (sessionId) {
+          try {
+            data = await reportApi.getBySessionId(sessionId);
+          } catch (error) {
+            data = await reportApi.generate(sessionId);
+          }
+        } else {
+          const latestReports = await reportApi.getAll();
+          data = latestReports?.[0] || null;
+        }
+
+        if (!data) {
+          setReportError("Belum ada laporan yang tersedia.");
+          return;
+        }
+
+        setReport(data);
+      } catch (error) {
+        setReportError(error.message || "Gagal memuat laporan sesi.");
+      } finally {
+        setIsLoadingReport(false);
+      }
+    };
+
+    loadReport();
+  }, [report, reportId, sessionId]);
 
   const emotionColors = {
     Senang: "#22c55e",
@@ -54,7 +97,7 @@ function SessionReportPage() {
       studentName: "-",
       nim: "-",
       programStudy: "-",
-      counselorName: "Hendrawaty, ST., MT",
+      counselorName: "Konselor / Admin",
       topic: "-",
       method: "-",
       initialNote: "-",
@@ -91,7 +134,21 @@ function SessionReportPage() {
   const sessionInfo = data.sessionInfo || fallbackReport.sessionInfo;
   const counts = data.counts || fallbackReport.counts;
   const percentages = data.percentages || fallbackReport.percentages;
-  const chartPoints = data.chartPoints || [];
+  const emotionToY = {
+    Marah: 0,
+    Sedih: 1,
+    Takut: 2,
+    Netral: 3,
+    Senang: 4,
+  };
+
+  const chartPoints = (data.chartPoints || []).map((point) => ({
+    ...point,
+    y:
+      point.y !== undefined
+        ? point.y
+        : emotionToY[point.emotion] ?? null,
+  })).filter((point) => point.y !== null);
   const markers = data.markers || [];
 
   const totalDetected = data.total || chartPoints.length || 0;
@@ -831,6 +888,34 @@ function SessionReportPage() {
       setIsDownloading(false);
     }
   };
+
+  if (isLoadingReport) {
+    return (
+      <AppLayout
+        title="Laporan Hasil Konseling"
+        subtitle="Dashboard > Laporan Konseling > Hasil Sesi"
+        showSessionStatus={false}
+      >
+        <div className="rounded-[26px] border border-blue-100 bg-blue-50 px-5 py-4 text-sm font-extrabold text-blue-700">
+          Memuat laporan hasil konseling...
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!report && reportError) {
+    return (
+      <AppLayout
+        title="Laporan Hasil Konseling"
+        subtitle="Dashboard > Laporan Konseling > Hasil Sesi"
+        showSessionStatus={false}
+      >
+        <div className="rounded-[26px] border border-rose-100 bg-rose-50 px-5 py-4 text-sm font-extrabold text-rose-700">
+          {reportError}
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout

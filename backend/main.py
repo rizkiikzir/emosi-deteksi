@@ -4,13 +4,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session as DBSession
 from datetime import datetime
 
-from database import engine, get_db
+from database import engine, get_db, SessionLocal
 from models import (
     Base,
     Student,
     Session as CounselingSession,
     EmotionLog,
     SessionMarker,
+    Report,
+    User,
 )
 from schemas import (
     StudentCreate,
@@ -20,6 +22,10 @@ from schemas import (
     CounselingSessionUpdate,
     EmotionLogCreate,
     SessionMarkerCreate,
+    ReportCreate,
+    LoginRequest,
+    UserUpdate,
+    ChangePasswordRequest,
 )
 
 import cv2
@@ -29,6 +35,7 @@ import os
 import tensorflow as tf
 import uuid
 from tensorflow.keras import layers, models
+import hashlib
 
 
 # ============================================================
@@ -43,6 +50,58 @@ app = FastAPI(
 
 Base.metadata.create_all(bind=engine)
 
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    return hash_password(password) == password_hash
+
+
+def format_user_response(user):
+    return {
+        "id": user.id,
+        "user_code": user.user_code,
+        "name": user.name,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "unit": user.unit,
+        "status": user.status,
+        "photo_url": user.photo_url,
+        "created_at": user.created_at,
+        "updated_at": user.updated_at,
+    }
+
+def seed_default_user():
+    db = SessionLocal()
+
+    try:
+        existing_user = db.query(User).filter(User.username == "admin").first()
+
+        if existing_user:
+            return
+
+        default_user = User(
+            user_code="USR-0001",
+            name="M Rizki",
+            username="admin",
+            email="admin@serin.local",
+            password_hash=hash_password("admin123"),
+            role="Konselor / Admin",
+            unit="Unit BK",
+            status="Aktif",
+            photo_url=None,
+        )
+
+        db.add(default_user)
+        db.commit()
+    finally:
+        db.close()
+
+
+seed_default_user()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -51,6 +110,153 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.post("/auth/login")
+def login(payload: LoginRequest, db: DBSession = Depends(get_db)):
+    username = payload.username.strip()
+
+    user = (
+        db.query(User)
+        .filter(User.username == username)
+        .first()
+    )
+
+    if user is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Username atau password salah.",
+        )
+
+    if user.status != "Aktif":
+        raise HTTPException(
+            status_code=403,
+            detail="Akun tidak aktif.",
+        )
+
+    if not verify_password(payload.password, user.password_hash):
+        raise HTTPException(
+            status_code=401,
+            detail="Username atau password salah.",
+        )
+
+    return {
+        "success": True,
+        "message": "Login berhasil.",
+        "user": format_user_response(user),
+    }
+
+@app.get("/users/me")
+def get_current_user(db: DBSession = Depends(get_db)):
+    user = db.query(User).filter(User.username == "admin").first()
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User tidak ditemukan.")
+
+    return format_user_response(user)
+
+@app.put("/users/me")
+def update_current_user(payload: UserUpdate, db: DBSession = Depends(get_db)):
+    user = db.query(User).filter(User.username == "admin").first()
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User tidak ditemukan.")
+
+    if payload.name is not None:
+        user.name = payload.name
+
+    if payload.username is not None:
+        existing_username = (
+            db.query(User)
+            .filter(User.username == payload.username, User.id != user.id)
+            .first()
+        )
+
+        if existing_username:
+            raise HTTPException(
+                status_code=400,
+                detail="Username sudah digunakan.",
+            )
+
+        user.username = payload.username
+
+    if payload.email is not None:
+        existing_email = (
+            db.query(User)
+            .filter(User.email == payload.email, User.id != user.id)
+            .first()
+        )
+
+        if existing_email:
+            raise HTTPException(
+                status_code=400,
+                detail="Email sudah digunakan.",
+            )
+
+        user.email = payload.email
+
+    if payload.role is not None:
+        user.role = payload.role
+
+    if payload.unit is not None:
+        user.unit = payload.unit
+
+    if payload.status is not None:
+        user.status = payload.status
+
+    if payload.photo_url is not None:
+        user.photo_url = payload.photo_url
+
+    user.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "success": True,
+        "message": "Profil berhasil diperbarui.",
+        "user": format_user_response(user),
+    }
+
+@app.put("/users/me/password")
+def change_current_user_password(
+    payload: ChangePasswordRequest,
+    db: DBSession = Depends(get_db),
+):
+    user = db.query(User).filter(User.username == "admin").first()
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User tidak ditemukan.")
+
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Password lama tidak sesuai.")
+
+    if payload.new_password != payload.confirm_password:
+        raise HTTPException(
+            status_code=400,
+            detail="Konfirmasi password baru tidak sesuai.",
+        )
+
+    if len(payload.new_password) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail="Password baru minimal 6 karakter.",
+        )
+
+    if payload.current_password == payload.new_password:
+        raise HTTPException(
+            status_code=400,
+            detail="Password baru tidak boleh sama dengan password lama.",
+        )
+
+    user.password_hash = hash_password(payload.new_password)
+    user.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "success": True,
+        "message": "Password berhasil diperbarui.",
+    }
 
 # ============================================================
 # PATH SETUP
@@ -406,6 +612,169 @@ print("Model berhasil dimuat dari weights.")
 # ============================================================
 # ROUTES
 # ============================================================
+def generate_report_code(db: DBSession):
+    last_report = (
+        db.query(Report)
+        .order_by(Report.id.desc())
+        .first()
+    )
+
+    next_number = 1 if last_report is None else last_report.id + 1
+    return f"RPT-{next_number:04d}"
+
+
+def calculate_report_from_logs(session: CounselingSession, logs, markers):
+    emotion_order = ["Senang", "Sedih", "Marah", "Takut", "Netral"]
+
+    counts = {
+        "Senang": 0,
+        "Sedih": 0,
+        "Marah": 0,
+        "Takut": 0,
+        "Netral": 0,
+    }
+
+    for log in logs:
+        if log.emotion in counts:
+            counts[log.emotion] += 1
+
+    total = sum(counts.values())
+
+    percentages = {}
+    for emotion in emotion_order:
+        percentages[emotion] = 0 if total == 0 else round((counts[emotion] / total) * 100, 1)
+
+    max_count = max(counts.values()) if total > 0 else 0
+    dominant_emotions = [
+        emotion for emotion, count in counts.items()
+        if count == max_count and total > 0
+    ]
+
+    dominant_emotion = " dan ".join(dominant_emotions) if dominant_emotions else "-"
+    dominant_percentage = (
+        round(sum(percentages[e] for e in dominant_emotions) / len(dominant_emotions), 1)
+        if dominant_emotions else 0
+    )
+
+    negative_total = (
+        percentages.get("Sedih", 0)
+        + percentages.get("Marah", 0)
+        + percentages.get("Takut", 0)
+    )
+
+    if dominant_emotion == "Sedih":
+        interpretation = f"Emosi Sedih menjadi emosi dominan selama sesi dengan persentase {percentages['Sedih']}%. Hal ini dapat mengindikasikan adanya tekanan emosional, rasa tidak nyaman, atau beban psikologis yang perlu diperhatikan lebih lanjut oleh konselor."
+        recommendation = "Konselor disarankan menggunakan pendekatan yang lebih empatik, memberi ruang mahasiswa untuk bercerita, serta menggali faktor penyebab munculnya emosi sedih selama sesi."
+    elif dominant_emotion == "Marah":
+        interpretation = f"Emosi Marah menjadi emosi dominan selama sesi dengan persentase {percentages['Marah']}%. Hal ini dapat mengindikasikan adanya resistensi, frustrasi, atau ketegangan emosional pada mahasiswa selama proses konseling."
+        recommendation = "Konselor disarankan menurunkan tensi komunikasi, menggunakan pertanyaan terbuka, dan menghindari respons yang berpotensi meningkatkan resistensi mahasiswa."
+    elif dominant_emotion == "Takut":
+        interpretation = f"Emosi Takut menjadi emosi dominan selama sesi dengan persentase {percentages['Takut']}%. Hal ini dapat mengindikasikan adanya kecemasan, kekhawatiran, atau rasa tidak aman dalam membahas topik tertentu."
+        recommendation = "Konselor disarankan menciptakan suasana yang lebih aman dan menenangkan, serta memastikan mahasiswa merasa nyaman sebelum menggali topik yang sensitif."
+    elif dominant_emotion == "Senang":
+        interpretation = f"Emosi Senang menjadi emosi dominan selama sesi dengan persentase {percentages['Senang']}%. Hal ini menunjukkan respons emosional yang positif dan keterlibatan mahasiswa yang cukup baik selama sesi."
+        recommendation = "Konselor dapat mempertahankan pendekatan yang digunakan dan tetap memantau perubahan emosi mahasiswa pada bagian sesi yang lebih sensitif."
+    elif dominant_emotion == "Netral":
+        if negative_total >= 40:
+            interpretation = f"Emosi Netral menjadi emosi dominan selama sesi dengan persentase {percentages['Netral']}%, namun emosi negatif juga muncul dalam proporsi yang cukup terlihat."
+            recommendation = "Konselor disarankan meninjau bagian sesi ketika emosi negatif meningkat dan menggali konteks pembicaraan pada momen tersebut."
+        else:
+            interpretation = f"Emosi Netral menjadi emosi dominan selama sesi dengan persentase {percentages['Netral']}%. Hal ini menunjukkan ekspresi mahasiswa relatif stabil selama sesi."
+            recommendation = "Konselor dapat melanjutkan pendekatan konseling sesuai rencana dan tetap memperhatikan perubahan emosi yang signifikan."
+    else:
+        interpretation = f"Terdapat beberapa emosi dominan dengan proporsi yang seimbang, yaitu {dominant_emotion}. Hal ini menunjukkan respons emosi mahasiswa cukup bervariasi selama sesi."
+        recommendation = "Konselor disarankan meninjau grafik sebaran emosi dan momen penting untuk memahami konteks perubahan emosi mahasiswa secara lebih menyeluruh."
+
+    chart_points = []
+    for log in logs:
+        chart_points.append({
+            "x": log.timestamp_second,
+            "emotion": log.emotion,
+            "confidence": log.confidence,
+        })
+
+    marker_items = []
+    for marker in markers:
+        marker_items.append({
+            "id": marker.id,
+            "timeSecond": marker.timestamp_second,
+            "timeLabel": f"Detik ke-{marker.timestamp_second}",
+            "title": marker.title,
+            "category": marker.category,
+            "note": marker.note,
+            "analysis": marker.dominant_emotion_after_marker,
+        })
+
+    emotion_summary = {
+        "counts": counts,
+        "percentages": percentages,
+        "chartPoints": chart_points,
+        "markers": marker_items,
+    }
+
+    return {
+        "total": total,
+        "counts": counts,
+        "percentages": percentages,
+        "dominant_emotion": dominant_emotion,
+        "dominant_percentage": dominant_percentage,
+        "interpretation": interpretation,
+        "recommendation": recommendation,
+        "emotion_summary": emotion_summary,
+        "timeline_summary": [],
+    }
+
+
+def format_report_response(report: Report, session: CounselingSession):
+    student = session.student if session else None
+
+    emotion_summary = json.loads(report.emotion_summary_json or "{}")
+    timeline_summary = json.loads(report.timeline_summary_json or "[]")
+
+    return {
+        "id": report.id,
+        "reportId": report.report_code,
+        "report_code": report.report_code,
+
+        "session_id": report.session_id,
+        "sessionId": session.session_code if session else None,
+
+        "sessionInfo": {
+            "id": session.id if session else None,
+            "sessionId": session.session_code if session else None,
+            "studentName": student.name if student else "-",
+            "nim": student.nim if student else "-",
+            "programStudy": student.program_study if student else "-",
+            "counselorName": "Konselor / Admin",
+            "topic": session.topic if session else "-",
+            "title": session.title if session else "-",
+            "counselingType": session.counseling_type if session else "-",
+            "location": session.location if session else "-",
+            "purpose": session.goal if session else "-",
+            "initialNote": session.initial_note if session else "-",
+            "startDate": session.scheduled_date if session else "-",
+            "startTime": session.scheduled_time if session else "-",
+            "duration": session.actual_duration or session.estimated_duration if session else "-",
+            "modelName": report.model_name or "LightExNet V2",
+        },
+
+        "total": report.total_detections,
+        "counts": emotion_summary.get("counts", {}),
+        "percentages": emotion_summary.get("percentages", {}),
+        "chartPoints": emotion_summary.get("chartPoints", []),
+        "markers": emotion_summary.get("markers", []),
+        "timeline": timeline_summary,
+
+        "dominantEmotion": report.dominant_emotion,
+        "dominantPercentage": report.dominant_percentage,
+        "interpretation": report.interpretation,
+        "recommendation": report.recommendation,
+
+        "duration": session.actual_duration if session else "-",
+        "totalDuration": session.actual_duration if session else "-",
+        "createdAt": report.created_at,
+        "status": "Selesai",
+    }
 
 def generate_session_code(db: DBSession):
     last_session = (
@@ -568,6 +937,18 @@ def delete_student(student_id: int, db: DBSession = Depends(get_db)):
     if student is None:
         raise HTTPException(status_code=404, detail="Mahasiswa tidak ditemukan.")
 
+    session_count = (
+        db.query(CounselingSession)
+        .filter(CounselingSession.student_id == student_id)
+        .count()
+    )
+
+    if session_count > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Mahasiswa tidak dapat dihapus karena sudah memiliki riwayat sesi konseling.",
+        )
+
     db.delete(student)
     db.commit()
 
@@ -575,6 +956,59 @@ def delete_student(student_id: int, db: DBSession = Depends(get_db)):
         "success": True,
         "message": "Mahasiswa berhasil dihapus.",
         "deleted_id": student_id,
+    }
+    student = db.query(Student).filter(Student.id == student_id).first()
+
+    if student is None:
+        raise HTTPException(status_code=404, detail="Mahasiswa tidak ditemukan.")
+
+    db.delete(student)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": "Mahasiswa berhasil dihapus.",
+        "deleted_id": student_id,
+    }
+
+@app.post("/uploads/users")
+async def upload_user_photo(file: UploadFile = File(...)):
+    allowed_types = ["image/jpeg", "image/png", "image/webp"]
+
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Format foto harus JPG, PNG, atau WEBP.",
+        )
+
+    contents = await file.read()
+
+    max_size = 2 * 1024 * 1024
+    if len(contents) > max_size:
+        raise HTTPException(
+            status_code=400,
+            detail="Ukuran foto maksimal 2MB.",
+        )
+
+    extension = os.path.splitext(file.filename)[1].lower()
+    if extension not in [".jpg", ".jpeg", ".png", ".webp"]:
+        extension = ".png"
+
+    filename = f"{uuid.uuid4().hex}{extension}"
+    folder_path = os.path.join(UPLOAD_DIR, "profile")
+    os.makedirs(folder_path, exist_ok=True)
+
+    file_path = os.path.join(folder_path, filename)
+
+    with open(file_path, "wb") as buffer:
+        buffer.write(contents)
+
+    photo_url = f"/uploads/profile/{filename}"
+
+    return {
+        "success": True,
+        "message": "Foto profil berhasil diupload.",
+        "photo_url": photo_url,
     }
 
 @app.post("/uploads/students")
@@ -862,6 +1296,162 @@ def create_session_marker(
     db.refresh(new_marker)
 
     return new_marker
+
+@app.post("/reports/generate")
+def generate_report(
+    payload: ReportCreate,
+    db: DBSession = Depends(get_db)
+):
+    session = (
+        db.query(CounselingSession)
+        .filter(CounselingSession.id == payload.session_id)
+        .first()
+    )
+
+    if session is None:
+        raise HTTPException(status_code=404, detail="Sesi konseling tidak ditemukan.")
+
+    logs = (
+        db.query(EmotionLog)
+        .filter(EmotionLog.session_id == payload.session_id)
+        .order_by(EmotionLog.timestamp_second.asc())
+        .all()
+    )
+
+    if len(logs) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Belum ada data deteksi untuk membuat laporan."
+        )
+
+    markers = (
+        db.query(SessionMarker)
+        .filter(SessionMarker.session_id == payload.session_id)
+        .order_by(SessionMarker.timestamp_second.asc())
+        .all()
+    )
+
+    calculated = calculate_report_from_logs(session, logs, markers)
+
+    existing_report = (
+        db.query(Report)
+        .filter(Report.session_id == payload.session_id)
+        .first()
+    )
+
+    if existing_report:
+        report = existing_report
+        report.dominant_emotion = calculated["dominant_emotion"]
+        report.dominant_percentage = calculated["dominant_percentage"]
+        report.total_detections = calculated["total"]
+        report.emotion_summary_json = json.dumps(calculated["emotion_summary"])
+        report.timeline_summary_json = json.dumps(calculated["timeline_summary"])
+        report.interpretation = calculated["interpretation"]
+        report.recommendation = calculated["recommendation"]
+        report.updated_at = datetime.utcnow()
+    else:
+        report = Report(
+            report_code=generate_report_code(db),
+            session_id=payload.session_id,
+            dominant_emotion=calculated["dominant_emotion"],
+            dominant_percentage=calculated["dominant_percentage"],
+            total_detections=calculated["total"],
+            emotion_summary_json=json.dumps(calculated["emotion_summary"]),
+            timeline_summary_json=json.dumps(calculated["timeline_summary"]),
+            interpretation=calculated["interpretation"],
+            recommendation=calculated["recommendation"],
+            model_name="LightExNet V2",
+            model_accuracy=80.55,
+        )
+
+        db.add(report)
+
+    session.status = "Selesai"
+    session.actual_duration = session.actual_duration or session.estimated_duration
+    session.ended_at = datetime.utcnow()
+    session.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(report)
+    db.refresh(session)
+
+    return format_report_response(report, session)
+
+
+@app.get("/reports")
+def get_reports(db: DBSession = Depends(get_db)):
+    reports = (
+        db.query(Report)
+        .order_by(Report.id.desc())
+        .all()
+    )
+
+    result = []
+
+    for report in reports:
+        session = (
+            db.query(CounselingSession)
+            .filter(CounselingSession.id == report.session_id)
+            .first()
+        )
+
+        result.append(format_report_response(report, session))
+
+    return result
+
+
+@app.get("/reports/{report_id}")
+def get_report(report_id: int, db: DBSession = Depends(get_db)):
+    report = db.query(Report).filter(Report.id == report_id).first()
+
+    if report is None:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan.")
+
+    session = (
+        db.query(CounselingSession)
+        .filter(CounselingSession.id == report.session_id)
+        .first()
+    )
+
+    return format_report_response(report, session)
+
+@app.delete("/reports/{report_id}")
+def delete_report(report_id: int, db: DBSession = Depends(get_db)):
+    report = db.query(Report).filter(Report.id == report_id).first()
+
+    if report is None:
+        raise HTTPException(status_code=404, detail="Laporan tidak ditemukan.")
+
+    db.delete(report)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": "Laporan berhasil dihapus.",
+        "deleted_id": report_id,
+    }
+
+@app.get("/sessions/{session_id}/report")
+def get_report_by_session(session_id: int, db: DBSession = Depends(get_db)):
+    session = (
+        db.query(CounselingSession)
+        .filter(CounselingSession.id == session_id)
+        .first()
+    )
+
+    if session is None:
+        raise HTTPException(status_code=404, detail="Sesi konseling tidak ditemukan.")
+
+    report = (
+        db.query(Report)
+        .filter(Report.session_id == session_id)
+        .first()
+    )
+
+    if report is None:
+        raise HTTPException(status_code=404, detail="Laporan untuk sesi ini belum tersedia.")
+
+    return format_report_response(report, session)
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):

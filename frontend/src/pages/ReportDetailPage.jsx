@@ -1,6 +1,8 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { getEmotionIcon } from "../utils/emotionIcons";
+import { reportApi } from "../services/api";
 import {
   ArrowLeft,
   BarChart3,
@@ -66,13 +68,55 @@ const emotionOrder = ["Senang", "Sedih", "Marah", "Takut", "Netral"];
 function ReportDetailPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { id } = useParams();
 
-  const savedReport = localStorage.getItem("selectedSessionReport");
+  const [report, setReport] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const report =
-    location.state?.report || (savedReport ? safeParse(savedReport) : null);
+  useEffect(() => {
+    if (!id) return;
 
-  if (!report) {
+    const loadReportDetail = async () => {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
+
+        const data = await reportApi.getById(id);
+        setReport(data);
+      } catch (error) {
+        if (location.state?.report) {
+          setReport(location.state.report);
+          setErrorMessage("");
+          return;
+        }
+
+        setErrorMessage(error.message || "Gagal memuat detail laporan.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadReportDetail();
+  }, [id, location.state]);
+
+
+
+  if (isLoading) {
+    return (
+      <AppLayout
+        title="Detail Laporan"
+        subtitle="Dashboard > Riwayat Laporan > Detail Laporan"
+        showSessionStatus={false}
+      >
+        <div className="rounded-[28px] border border-blue-100 bg-blue-50 p-6 text-sm font-bold text-blue-700">
+          Memuat detail laporan...
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!report || errorMessage) {
     return (
       <AppLayout
         title="Detail Laporan"
@@ -89,8 +133,8 @@ function ReportDetailPage() {
           </h3>
 
           <p className="mx-auto mt-2 max-w-md text-sm font-semibold leading-6 text-slate-500">
-            Silakan pilih laporan dari halaman riwayat laporan agar sistem dapat
-            menampilkan detail evaluasi sesi konseling.
+            {errorMessage ||
+              "Silakan pilih laporan dari halaman riwayat laporan agar sistem dapat menampilkan detail evaluasi sesi konseling."}
           </p>
 
           <button
@@ -106,13 +150,28 @@ function ReportDetailPage() {
     );
   }
 
-  const sessionInfo = report.sessionInfo || {};
-  const counts = report.counts || {};
-  const percentages = report.percentages || {};
-  const markers = report.markers || [];
+  const emotionSummary = parseJson(report.emotion_summary_json) || {};
+  const sessionInfo = report.sessionInfo || report.session_info || {};
+
+  const counts =
+    report.counts ||
+    emotionSummary.counts ||
+    {};
+
+  const percentages =
+    report.percentages ||
+    emotionSummary.percentages ||
+    {};
+
+  const markers =
+    report.markers ||
+    report.session_markers ||
+    [];
 
   const dominantEmotion =
-    report.dominantEmotion || getDominantEmotion(percentages);
+    report.dominantEmotion ||
+    report.dominant_emotion ||
+    getDominantEmotion(percentages);
 
   const dominantMain = formatEmotionMain(dominantEmotion);
   const dominantDetail = formatEmotionDetail(dominantEmotion);
@@ -131,6 +190,7 @@ function ReportDetailPage() {
   const totalDetections =
     report.total ||
     report.totalDetected ||
+    report.total_detections ||
     Object.values(counts).reduce((sum, value) => sum + Number(value || 0), 0);
 
   const duration =
@@ -140,7 +200,7 @@ function ReportDetailPage() {
     sessionInfo.duration ||
     "00:00:00";
 
-  const accuracy = report.accuracy || "92.41";
+  const accuracy = report.accuracy || report.model_accuracy || "92.41";
 
   const studentName =
     sessionInfo.studentName || report.studentName || report.name || "-";
@@ -417,7 +477,10 @@ function ReportDetailPage() {
               />
 
               <div className="mt-5 divide-y divide-slate-100">
-                <InfoRow label="ID Laporan" value={report.id} />
+                <InfoRow
+                  label="ID Laporan"
+                  value={report.reportId || report.report_code || `RPT-${String(report.id).padStart(4, "0")}`}
+                />
                 <InfoRow
                   label="ID Sesi"
                   value={report.sessionId || sessionInfo.sessionId}
@@ -441,13 +504,13 @@ function ReportDetailPage() {
                 <InfoRow label="Metode" value={sessionInfo.method || "Tatap Muka"} />
                 <InfoRow
                   label="Model AI"
-                  value={report.modelName || sessionInfo.modelName || "LightExNet V2"}
+                  value={report.modelName || report.model_name || sessionInfo.modelName || "LightExNet V2"}
                 />
                 <InfoRow label="Total Deteksi" value={totalDetections} />
               </div>
             </section>
 
-           <section className="rounded-[28px] border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
+            <section className="rounded-[28px] border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
               <div className="flex items-start gap-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-[#2563EB] shadow-sm ring-1 ring-blue-100">
                   <ShieldCheck size={21} />
@@ -459,7 +522,7 @@ function ReportDetailPage() {
                   </h3>
 
                   <p className="mt-2 text-sm font-semibold leading-6 text-blue-900/80">
-                    Laporan ini telah tersimpan secara lokal dan dapat digunakan
+                    Laporan ini telah tersimpan di database sistem dan dapat digunakan
                     sebagai bahan evaluasi awal oleh konselor.
                   </p>
                 </div>
@@ -693,9 +756,13 @@ function generateFallbackRecommendation(emotion) {
   return "Belum tersedia rekomendasi awal untuk laporan ini.";
 }
 
-function safeParse(value) {
+function parseJson(value) {
+  if (!value) return null;
+
+  if (typeof value === "object") return value;
+
   try {
-    return value ? JSON.parse(value) : null;
+    return JSON.parse(value);
   } catch {
     return null;
   }

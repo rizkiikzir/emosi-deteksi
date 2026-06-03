@@ -15,9 +15,9 @@ export async function apiRequest(endpoint, options = {}) {
     headers: isFormData
       ? options.headers || {}
       : {
-          "Content-Type": "application/json",
-          ...(options.headers || {}),
-        },
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
     ...options,
   });
 
@@ -29,6 +29,38 @@ export async function apiRequest(endpoint, options = {}) {
 
   return data;
 }
+
+export const authApi = {
+  login: (payload) =>
+    apiRequest("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getMe: () => apiRequest("/users/me"),
+
+  updateMe: (payload) =>
+    apiRequest("/users/me", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+
+  changePassword: (payload) =>
+    apiRequest("/users/me/password", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+
+  uploadPhoto: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return apiRequest("/uploads/users", {
+      method: "POST",
+      body: formData,
+    });
+  },
+};
 
 export const studentApi = {
   getAll: () => apiRequest("/students"),
@@ -101,5 +133,26 @@ export const monitoringApi = {
     apiRequest("/session-markers", {
       method: "POST",
       body: JSON.stringify(payload),
+    }),
+};
+
+export const reportApi = {
+  getAll: () => apiRequest("/reports"),
+
+  getById: (id) => apiRequest(`/reports/${id}`),
+
+  getBySessionId: (sessionId) => apiRequest(`/sessions/${sessionId}/report`),
+
+  generate: (sessionId) =>
+    apiRequest("/reports/generate", {
+      method: "POST",
+      body: JSON.stringify({
+        session_id: Number(sessionId),
+      }),
+    }),
+
+  remove: (id) =>
+    apiRequest(`/reports/${id}`, {
+      method: "DELETE",
     }),
 };

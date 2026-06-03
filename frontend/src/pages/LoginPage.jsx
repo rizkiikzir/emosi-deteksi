@@ -5,6 +5,7 @@ import serinIcon from "../assets/serin-icon.png";
 import logoPnl from "../assets/logo-Pnl.png";
 import { getEmotionIcon } from "../utils/emotionIcons";
 import { Eye, EyeOff, Info, Lock, UserRound } from "lucide-react";
+import { authApi } from "../services/api";
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -17,6 +18,7 @@ function LoginPage() {
 
     const [showPassword, setShowPassword] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const updateForm = (field, value) => {
         setFormData((prev) => ({
@@ -27,35 +29,26 @@ function LoginPage() {
         if (errorMessage) setErrorMessage("");
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
-        const username = formData.username.trim().toLowerCase();
-        const password = formData.password.trim();
+        try {
+            setIsLoading(true);
+            setErrorMessage("");
 
-        const isCounselorLogin =
-            (username === "konselor" || username === "hendrawaty") &&
-            password === "konselor123";
+            const response = await authApi.login({
+                username: formData.username,
+                password: formData.password,
+            });
 
-        const isAdminLogin = username === "admin" && password === "admin123";
+            localStorage.setItem("serinUser", JSON.stringify(response.user));
 
-        if (!isCounselorLogin && !isAdminLogin) {
-            setErrorMessage("Email/username atau password tidak sesuai.");
-            return;
+            navigate("/dashboard");
+        } catch (error) {
+            setErrorMessage(error.message || "Login gagal.");
+        } finally {
+            setIsLoading(false);
         }
-
-        const authUser = {
-            name: isAdminLogin ? "Admin Unit BK" : "Hendrawaty, ST., MT",
-            role: isAdminLogin ? "Admin" : "Konselor",
-            username,
-            isLoggedIn: true,
-            loginAt: new Date().toISOString(),
-        };
-
-        localStorage.setItem("authUser", JSON.stringify(authUser));
-        localStorage.setItem("isAuthenticated", "true");
-
-        navigate("/dashboard");
     };
 
     return (
@@ -210,27 +203,6 @@ function LoginPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between gap-4">
-                                    <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.remember}
-                                            onChange={(event) =>
-                                                updateForm("remember", event.target.checked)
-                                            }
-                                            className="h-4 w-4 rounded border-slate-300 accent-[#5B4FE9]"
-                                        />
-                                        Ingat saya
-                                    </label>
-
-                                    <button
-                                        type="button"
-                                        className="text-xs font-bold text-[#5B4FE9] transition hover:text-[#4338CA]"
-                                    >
-                                        Lupa password?
-                                    </button>
-                                </div>
-
                                 {errorMessage && (
                                     <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-2 text-xs font-bold text-red-600">
                                         {errorMessage}
@@ -239,10 +211,11 @@ function LoginPage() {
 
                                 <button
                                     type="submit"
-                                    className="serin-primary-button flex h-12 w-full items-center justify-center gap-3 rounded-2xl px-5 text-sm font-extrabold"
+                                    disabled={isLoading}
+                                    className="serin-primary-button flex h-12 w-full items-center justify-center gap-3 rounded-2xl px-5 text-sm font-extrabold disabled:cursor-not-allowed disabled:opacity-70"
                                 >
                                     <Lock size={18} />
-                                    Login
+                                    {isLoading ? "Memproses..." : "Login"}
                                 </button>
                             </form>
 

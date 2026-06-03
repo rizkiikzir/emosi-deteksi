@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import serinIcon from "../assets/serin-icon.png";
 import logoPnl from "../assets/logo-Pnl.png";
+import { getAssetUrl } from "../services/api";
 import {
   LayoutDashboard,
   Users,
@@ -32,32 +33,13 @@ function AppLayout({
 
   useEffect(() => {
     const loadHeaderProfile = () => {
-      const savedProfile = localStorage.getItem("serinUserProfile");
+      const savedUser = safeParse(localStorage.getItem("serinUser"));
 
-      if (!savedProfile) {
-        setHeaderProfile({
-          name: "Admin Unit BK",
-          role: "Admin",
-          photo: "",
-        });
-        return;
-      }
-
-      try {
-        const parsedProfile = JSON.parse(savedProfile);
-
-        setHeaderProfile({
-          name: parsedProfile.name || "Admin Unit BK",
-          role: parsedProfile.role || "Admin",
-          photo: parsedProfile.photo || "",
-        });
-      } catch {
-        setHeaderProfile({
-          name: "Admin Unit BK",
-          role: "Admin",
-          photo: "",
-        });
-      }
+      setHeaderProfile({
+        name: savedUser?.name || "Admin Unit BK",
+        role: savedUser?.role || "Admin",
+        photo: savedUser?.photo_url || "",
+      });
     };
 
     loadHeaderProfile();
@@ -119,9 +101,8 @@ function AppLayout({
         className={`fixed left-0 top-0 z-40 flex h-screen ${sidebarWidth} flex-col border-r border-slate-200/80 bg-white/95 shadow-[8px_0_30px_rgba(15,23,42,0.03)] backdrop-blur transition-all duration-300`}
       >
         <div
-          className={`flex h-20 shrink-0 items-center border-b border-slate-100 px-5 transition-all duration-300 ${
-            isSidebarCollapsed ? "justify-center px-3" : "gap-3"
-          }`}
+          className={`flex h-20 shrink-0 items-center border-b border-slate-100 px-5 transition-all duration-300 ${isSidebarCollapsed ? "justify-center px-3" : "gap-3"
+            }`}
         >
           <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white ring-1 ring-indigo-100">
             <img
@@ -144,9 +125,8 @@ function AppLayout({
         </div>
 
         <nav
-          className={`flex-1 space-y-1.5 py-4 transition-all duration-300 ${
-            isSidebarCollapsed ? "px-3" : "px-3.5"
-          }`}
+          className={`flex-1 space-y-1.5 py-4 transition-all duration-300 ${isSidebarCollapsed ? "px-3" : "px-3.5"
+            }`}
         >
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -181,14 +161,12 @@ function AppLayout({
         </nav>
 
         <div
-          className={`shrink-0 px-3.5 pb-4 transition-all duration-300 ${
-            isSidebarCollapsed ? "px-3" : ""
-          }`}
+          className={`shrink-0 px-3.5 pb-4 transition-all duration-300 ${isSidebarCollapsed ? "px-3" : ""
+            }`}
         >
           <div
-            className={`flex items-center rounded-2xl px-1 py-1 ${
-              isSidebarCollapsed ? "justify-center" : "gap-3"
-            }`}
+            className={`flex items-center rounded-2xl px-1 py-1 ${isSidebarCollapsed ? "justify-center" : "gap-3"
+              }`}
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-slate-200">
               <img
@@ -262,7 +240,7 @@ function AppLayout({
               <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-xs font-extrabold text-slate-500 ring-1 ring-slate-200">
                 {displayPhoto ? (
                   <img
-                    src={displayPhoto}
+                    src={getAssetUrl(displayPhoto)}
                     alt={displayName}
                     className="h-full w-full object-cover"
                   />
@@ -306,6 +284,14 @@ function getInitial(name) {
     .map((word) => word[0])
     .join("")
     .toUpperCase();
+}
+
+function safeParse(value) {
+  try {
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return null;
+  }
 }
 
 export default AppLayout;

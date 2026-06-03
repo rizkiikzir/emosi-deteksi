@@ -1,4 +1,4 @@
-import { sessionApi } from "../services/api";
+import { reportApi, sessionApi } from "../services/api";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
@@ -16,31 +16,40 @@ import {
 
 const CURRENT_SESSION_KEY = "currentCounselingSession";
 
-const mapSessionFromApi = (session) => ({
-  id: session.id,
-  sessionId: session.session_code,
+const mapSessionFromApi = (session) => {
+  const isFinished = session.status === "Selesai";
 
-  studentId: session.student_id,
-  studentName: session.student_name || "-",
-  nim: session.student_nim || "-",
-  programStudy: session.student_program_study || "-",
+  return {
+    id: session.id,
+    sessionId: session.session_code,
 
-  topic: session.topic || session.title || "-",
-  title: session.title || "-",
-  counselingType: session.counseling_type || "-",
-  counselorName: "Konselor / Admin",
+    studentId: session.student_id,
+    studentName: session.student_name || "-",
+    nim: session.student_nim || "-",
+    programStudy: session.student_program_study || "-",
 
-  startDate: formatDateDisplay(session.scheduled_date),
-  startTime: session.scheduled_time || "-",
-  duration: session.estimated_duration || "-",
+    topic: session.topic || session.title || "-",
+    title: session.title || "-",
+    counselingType: session.counseling_type || "-",
+    counselorName: "Konselor / Admin",
 
-  status: session.status || "Terjadwal",
+    startDate: formatDateDisplay(session.scheduled_date),
+    startTime: session.scheduled_time || "-",
 
-  location: session.location || "-",
-  purpose: session.goal || "",
-  initialNote: session.initial_note || "",
-  createdAt: session.created_at,
-});
+    duration: isFinished
+      ? session.actual_duration || session.estimated_duration || "-"
+      : session.estimated_duration || "-",
+
+    durationType: isFinished ? "Aktual" : "Estimasi",
+
+    status: session.status || "Terjadwal",
+
+    location: session.location || "-",
+    purpose: session.goal || "",
+    initialNote: session.initial_note || "",
+    createdAt: session.created_at,
+  };
+};
 
 function SessionPage() {
   const navigate = useNavigate();
@@ -205,24 +214,96 @@ function SessionPage() {
     filteredSessions.length
   );
 
-  const handleContinueMonitoring = (session) => {
-    localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(session));
+  const handleContinueMonitoring = async (session) => {
+    try {
+      setIsLoading(true);
 
-    navigate("/monitoring", {
-      state: {
-        session,
-      },
-    });
+      const detail = await sessionApi.getById(session.id);
+
+      const monitoringSession = {
+        id: detail.id,
+        sessionId: detail.session_code,
+
+        studentId: detail.student_id,
+        studentName: detail.student_name || session.studentName || "-",
+        nim: detail.student_nim || session.nim || "-",
+        programStudy:
+          detail.student_program_study || session.programStudy || "-",
+
+        counselorId: detail.counselor_id || session.counselorId || null,
+        counselorName: session.counselorName || "Konselor / Admin",
+
+        title: detail.title || session.title || "-",
+        counselingType: detail.counseling_type || session.counselingType || "-",
+        topic: detail.topic || session.topic || "-",
+        method: session.method || "Tatap Muka",
+        location: detail.location || session.location || "-",
+        purpose: detail.goal || session.purpose || "",
+        initialNote: detail.initial_note || session.initialNote || "",
+
+        startDate: session.startDate || detail.scheduled_date || "-",
+        startTime: detail.scheduled_time || session.startTime || "-",
+        duration:
+          detail.actual_duration ||
+          detail.estimated_duration ||
+          session.duration ||
+          "-",
+
+        modelName: "LightExNet V2",
+        detectedEmotions: ["Senang", "Sedih", "Marah", "Takut", "Netral"],
+
+        status: detail.status || session.status || "Berjalan",
+        createdAt: detail.created_at || session.createdAt,
+      };
+
+      localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(monitoringSession));
+
+      navigate("/monitoring", {
+        state: {
+          session: monitoringSession,
+        },
+      });
+    } catch (error) {
+      alert(error.message || "Gagal membuka sesi monitoring.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleViewSession = (session) => {
-    localStorage.setItem("selectedSessionDetail", JSON.stringify(session));
+  const handleViewSession = async (session) => {
+    try {
+      setIsLoading(true);
 
-    navigate("/monitoring", {
-      state: {
-        session,
-      },
-    });
+      if (session.status === "Selesai") {
+        let report = null;
+
+        try {
+          report = await reportApi.getBySessionId(session.id);
+        } catch (error) {
+          report = await reportApi.generate(session.id);
+        }
+
+        navigate(`/detail-laporan/${report.id}`, {
+          state: {
+            report,
+          },
+        });
+
+        return;
+      }
+
+      localStorage.setItem("selectedSessionDetail", JSON.stringify(session));
+
+      navigate("/monitoring", {
+        state: {
+          session,
+        },
+      });
+    } catch (error) {
+      alert(error.message || "Gagal membuka detail sesi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteSession = async (session) => {
@@ -559,8 +640,13 @@ function SessionRow({ session, rowNumber, onView, onContinue, onDelete }) {
         </p>
       </div>
 
-      <div className="font-bold text-slate-800">
-        {formatDuration(session.duration)}
+      <div className="pr-3">
+        <p className="font-bold text-slate-800">
+          {formatDuration(session.duration)}
+        </p>
+        <p className="mt-0.5 text-xs font-semibold text-slate-400">
+          {session.durationType || "-"}
+        </p>
       </div>
 
       <div>

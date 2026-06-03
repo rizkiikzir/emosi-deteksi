@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fileToBase64, validateImageFile } from "../utils/imageUpload";
 import AppLayout from "../components/AppLayout";
+import { authApi, getAssetUrl } from "../services/api";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -15,15 +15,19 @@ import {
   ShieldCheck,
   UserRound,
   X,
+  KeyRound,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 const defaultProfile = {
   name: "Admin Unit BK",
   role: "Konselor / Admin",
   username: "admin",
-  unit: "Unit BK Politeknik Negeri Lhokseumawe",
-  status: "Akun Aktif",
-  photo: "",
+  email: "admin@serin.local",
+  unit: "Unit BK",
+  status: "Aktif",
+  photo_url: "",
 };
 
 const accessList = [
@@ -56,25 +60,62 @@ const accessList = [
 function ProfilePage() {
   const navigate = useNavigate();
 
+  const passwordSectionRef = useRef(null);
+
   const [profile, setProfile] = useState(defaultProfile);
   const [formProfile, setFormProfile] = useState(defaultProfile);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
+  });
 
   useEffect(() => {
-    const savedProfile = localStorage.getItem("serinUserProfile");
-
-    if (savedProfile) {
+    const loadProfile = async () => {
       try {
-        const parsedProfile = JSON.parse(savedProfile);
-        const mergedProfile = { ...defaultProfile, ...parsedProfile };
+        const user = await authApi.getMe();
 
-        setProfile(mergedProfile);
-        setFormProfile(mergedProfile);
+        const normalizedUser = {
+          ...defaultProfile,
+          ...user,
+          photo_url: user.photo_url || "",
+          status: user.status || "Aktif",
+        };
+
+        setProfile(normalizedUser);
+        setFormProfile(normalizedUser);
+
+        localStorage.setItem("serinUser", JSON.stringify(normalizedUser));
+        window.dispatchEvent(new Event("serinUserProfileUpdated"));
       } catch {
-        setProfile(defaultProfile);
-        setFormProfile(defaultProfile);
+        const savedUser = safeParse(localStorage.getItem("serinUser")) || {};
+
+        const normalizedUser = {
+          ...defaultProfile,
+          ...savedUser,
+          photo_url: savedUser.photo_url || "",
+          status: savedUser.status || "Aktif",
+        };
+
+        setProfile(normalizedUser);
+        setFormProfile(normalizedUser);
       }
-    }
+    };
+
+    loadProfile();
   }, []);
 
   const handlePhotoChange = async (event) => {
@@ -82,20 +123,36 @@ function ProfilePage() {
 
     if (!file) return;
 
-    const errorMessage = validateImageFile(file);
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    const maxSize = 2 * 1024 * 1024;
 
-    if (errorMessage) {
-      alert(errorMessage);
+    if (!allowedTypes.includes(file.type)) {
+      alert("Format foto harus JPG, PNG, atau WEBP.");
       event.target.value = "";
       return;
     }
 
-    const base64Photo = await fileToBase64(file);
+    if (file.size > maxSize) {
+      alert("Ukuran foto maksimal 2MB.");
+      event.target.value = "";
+      return;
+    }
 
-    setFormProfile((current) => ({
-      ...current,
-      photo: base64Photo,
-    }));
+    try {
+      setIsUploading(true);
+
+      const uploadResponse = await authApi.uploadPhoto(file);
+
+      setFormProfile((current) => ({
+        ...current,
+        photo_url: uploadResponse.photo_url,
+      }));
+    } catch (error) {
+      alert(error.message || "Gagal upload foto profil.");
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
+    }
   };
 
   const handleChangeProfile = (field, value) => {
@@ -115,36 +172,113 @@ function ProfilePage() {
     setIsEditing(false);
   };
 
-  const handleSaveProfile = () => {
-    const updatedProfile = {
-      ...profile,
+  const handleSaveProfile = async () => {
+    const payload = {
       name: formProfile.name.trim() || defaultProfile.name,
       username: formProfile.username.trim() || defaultProfile.username,
+      email: formProfile.email?.trim() || defaultProfile.email,
       unit: formProfile.unit.trim() || defaultProfile.unit,
-      photo: formProfile.photo || "",
+      role: profile.role,
+      status: profile.status || "Aktif",
+      photo_url: formProfile.photo_url || "",
     };
 
-    setProfile(updatedProfile);
-    setFormProfile(updatedProfile);
+    try {
+      setIsSaving(true);
 
-    localStorage.setItem("serinUserProfile", JSON.stringify(updatedProfile));
+      const response = await authApi.updateMe(payload);
 
-    const oldAuthUser = safeParse(localStorage.getItem("authUser")) || {};
+      const updatedUser = {
+        ...defaultProfile,
+        ...response.user,
+        photo_url: response.user.photo_url || "",
+      };
 
-    localStorage.setItem(
-      "authUser",
-      JSON.stringify({
-        ...oldAuthUser,
-        name: updatedProfile.name,
-        username: updatedProfile.username,
-        role: updatedProfile.role,
-        unit: updatedProfile.unit,
-        photo: updatedProfile.photo,
-      })
-    );
+      setProfile(updatedUser);
+      setFormProfile(updatedUser);
 
-    window.dispatchEvent(new Event("serinUserProfileUpdated"));
+      localStorage.setItem("serinUser", JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event("serinUserProfileUpdated"));
+
+      setIsEditing(false);
+      alert("Profil berhasil diperbarui.");
+    } catch (error) {
+      alert(error.message || "Gagal menyimpan profil.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePasswordChange = (field, value) => {
+    setPasswordForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
+
+  const resetPasswordForm = () => {
+    setPasswordForm({
+      current_password: "",
+      new_password: "",
+      confirm_password: "",
+    });
+
+    setShowPassword({
+      current: false,
+      new: false,
+      confirm: false,
+    });
+  };
+
+  const handleCancelChangePassword = () => {
+    resetPasswordForm();
+    setIsChangingPassword(false);
+  };
+
+  const handleSavePassword = async () => {
+    if (!passwordForm.current_password) {
+      alert("Password lama wajib diisi.");
+      return;
+    }
+
+    if (passwordForm.new_password.length < 6) {
+      alert("Password baru minimal 6 karakter.");
+      return;
+    }
+
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      alert("Konfirmasi password baru tidak sesuai.");
+      return;
+    }
+
+    try {
+      setIsSavingPassword(true);
+
+      await authApi.changePassword(passwordForm);
+
+      resetPasswordForm();
+      setIsChangingPassword(false);
+
+      alert(
+        "Password berhasil diperbarui. Silakan gunakan password baru saat login berikutnya."
+      );
+    } catch (error) {
+      alert(error.message || "Gagal mengganti password.");
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
+
+  const handleOpenChangePassword = () => {
+    setIsChangingPassword(true);
     setIsEditing(false);
+
+    setTimeout(() => {
+      passwordSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
   };
 
   const handleLogout = () => {
@@ -152,9 +286,7 @@ function ProfilePage() {
 
     if (!confirmLogout) return;
 
-    localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("serinUser");
-    localStorage.removeItem("currentCounselingSession");
 
     navigate("/login", { replace: true });
   };
@@ -169,17 +301,11 @@ function ProfilePage() {
         <section className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 flex-col gap-5 md:flex-row md:items-center">
-              <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-50 text-3xl font-black text-[#2563EB] ring-1 ring-blue-100 shadow-sm">
-                {profile.photo ? (
-                  <img
-                    src={profile.photo}
-                    alt={profile.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  getInitial(profile.name)
-                )}
-              </div>
+              <AvatarImage
+                name={profile.name}
+                photoUrl={profile.photo_url}
+                sizeClass="h-24 w-24 text-3xl"
+              />
 
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
@@ -217,6 +343,15 @@ function ProfilePage() {
 
               <button
                 type="button"
+                onClick={handleOpenChangePassword}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-indigo-100 bg-indigo-50 px-5 text-sm font-extrabold text-indigo-700 shadow-sm transition hover:bg-indigo-100"
+              >
+                <KeyRound size={17} />
+                Ganti Password
+              </button>
+
+              <button
+                type="button"
                 onClick={() => navigate("/dashboard")}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-blue-100 bg-white px-5 text-sm font-extrabold text-[#2563EB] shadow-sm transition hover:bg-blue-50"
               >
@@ -248,7 +383,7 @@ function ProfilePage() {
 
             <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-extrabold text-emerald-700 ring-1 ring-emerald-100">
               <CheckCircle2 size={16} />
-              Aktif
+              {profile.status}
             </span>
           </div>
         </section>
@@ -268,34 +403,29 @@ function ProfilePage() {
                 </p>
 
                 <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center">
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-50 text-xl font-black text-[#2563EB] ring-1 ring-blue-100">
-                    {formProfile.photo ? (
-                      <img
-                        src={formProfile.photo}
-                        alt={formProfile.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      getInitial(formProfile.name)
-                    )}
-                  </div>
+                  <AvatarImage
+                    name={formProfile.name}
+                    photoUrl={formProfile.photo_url}
+                    sizeClass="h-20 w-20 text-xl"
+                  />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap gap-2">
                       <label className="inline-flex h-11 cursor-pointer items-center justify-center rounded-2xl border border-blue-100 bg-white px-5 text-sm font-extrabold text-[#2563EB] shadow-sm transition hover:bg-blue-50">
-                        Pilih Foto
+                        {isUploading ? "Mengupload..." : "Pilih Foto"}
                         <input
                           type="file"
                           accept="image/png,image/jpeg,image/jpg,image/webp"
                           onChange={handlePhotoChange}
+                          disabled={isUploading}
                           className="hidden"
                         />
                       </label>
 
-                      {formProfile.photo && (
+                      {formProfile.photo_url && (
                         <button
                           type="button"
-                          onClick={() => handleChangeProfile("photo", "")}
+                          onClick={() => handleChangeProfile("photo_url", "")}
                           className="inline-flex h-11 items-center justify-center rounded-2xl border border-rose-100 bg-rose-50 px-4 text-sm font-extrabold text-rose-700 transition hover:bg-rose-100"
                         >
                           Hapus Foto
@@ -328,6 +458,13 @@ function ProfilePage() {
                 />
 
                 <ProfileInput
+                  label="Email"
+                  value={formProfile.email}
+                  onChange={(value) => handleChangeProfile("email", value)}
+                  placeholder="Masukkan email"
+                />
+
+                <ProfileInput
                   label="Unit"
                   value={formProfile.unit}
                   onChange={(value) => handleChangeProfile("unit", value)}
@@ -348,16 +485,18 @@ function ProfilePage() {
                   <button
                     type="button"
                     onClick={handleSaveProfile}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] px-5 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(37,99,235,0.20)] transition hover:brightness-105"
+                    disabled={isSaving || isUploading}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] px-5 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(37,99,235,0.20)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     <Save size={17} />
-                    Simpan Perubahan
+                    {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
                   </button>
 
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-extrabold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    disabled={isSaving}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-extrabold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     <X size={17} />
                     Batal
@@ -368,13 +507,16 @@ function ProfilePage() {
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <InfoCard label="Nama Pengguna" value={profile.name} />
                 <InfoCard label="Username" value={profile.username} />
+                <InfoCard label="Email" value={profile.email} />
                 <InfoCard label="Unit" value={profile.unit} />
                 <InfoCard label="Role" value={profile.role} />
 
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 md:col-span-2">
-                  <p className="text-xs font-bold text-emerald-700">Status Akun</p>
+                  <p className="text-xs font-bold text-emerald-700">
+                    Status Akun
+                  </p>
                   <p className="mt-1 text-sm font-extrabold text-emerald-800">
-                    Aktif dan dapat mengakses dashboard SERIN
+                    {profile.status} dan dapat mengakses dashboard SERIN
                   </p>
                 </div>
               </div>
@@ -395,7 +537,84 @@ function ProfilePage() {
             </div>
           </section>
         </div>
+        {isChangingPassword && (
+          <section
+            ref={passwordSectionRef}
+            className="rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]"
+          >
+            <SectionHeader
+              icon={<KeyRound size={21} />}
+              title="Ganti Password"
+              desc="Perbarui password akun untuk menjaga keamanan akses dashboard SERIN."
+            />
 
+            <div className="mt-5 grid gap-4 lg:grid-cols-3">
+              <PasswordInput
+                label="Password Lama"
+                value={passwordForm.current_password}
+                visible={showPassword.current}
+                onToggle={() =>
+                  setShowPassword((current) => ({
+                    ...current,
+                    current: !current.current,
+                  }))
+                }
+                onChange={(value) => handlePasswordChange("current_password", value)}
+                placeholder="Masukkan password lama"
+              />
+
+              <PasswordInput
+                label="Password Baru"
+                value={passwordForm.new_password}
+                visible={showPassword.new}
+                onToggle={() =>
+                  setShowPassword((current) => ({
+                    ...current,
+                    new: !current.new,
+                  }))
+                }
+                onChange={(value) => handlePasswordChange("new_password", value)}
+                placeholder="Minimal 6 karakter"
+              />
+
+              <PasswordInput
+                label="Konfirmasi Password Baru"
+                value={passwordForm.confirm_password}
+                visible={showPassword.confirm}
+                onToggle={() =>
+                  setShowPassword((current) => ({
+                    ...current,
+                    confirm: !current.confirm,
+                  }))
+                }
+                onChange={(value) => handlePasswordChange("confirm_password", value)}
+                placeholder="Ulangi password baru"
+              />
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleSavePassword}
+                disabled={isSavingPassword}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#4F46E5] via-[#2563EB] to-[#38BDF8] px-5 text-sm font-extrabold text-white shadow-[0_14px_28px_rgba(37,99,235,0.20)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <Save size={17} />
+                {isSavingPassword ? "Menyimpan..." : "Simpan Password"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCancelChangePassword}
+                disabled={isSavingPassword}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-extrabold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <X size={17} />
+                Batal
+              </button>
+            </div>
+          </section>
+        )}
         <section className="rounded-[28px] border border-blue-100 bg-blue-50/70 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[#2563EB] shadow-sm ring-1 ring-blue-100">
@@ -417,6 +636,24 @@ function ProfilePage() {
         </section>
       </div>
     </AppLayout>
+  );
+}
+
+function AvatarImage({ name, photoUrl, sizeClass }) {
+  return (
+    <div
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-50 font-black text-[#2563EB] ring-1 ring-blue-100 shadow-sm ${sizeClass}`}
+    >
+      {photoUrl ? (
+        <img
+          src={getAssetUrl(photoUrl)}
+          alt={name}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        getInitial(name)
+      )}
+    </div>
   );
 }
 
@@ -465,11 +702,46 @@ function ProfileInput({ label, value, onChange, placeholder }) {
 
       <input
         type="text"
-        value={value}
+        value={value || ""}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
       />
+    </label>
+  );
+}
+
+function PasswordInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  visible,
+  onToggle,
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-extrabold text-slate-700">
+        {label}
+      </span>
+
+      <div className="relative">
+        <input
+          type={visible ? "text" : "password"}
+          value={value || ""}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-50"
+        />
+
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+        >
+          {visible ? <EyeOff size={17} /> : <Eye size={17} />}
+        </button>
+      </div>
     </label>
   );
 }

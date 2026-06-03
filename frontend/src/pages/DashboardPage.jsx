@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { getEmotionIcon } from "../utils/emotionIcons";
+import { reportApi, sessionApi, studentApi } from "../services/api";
 import {
   Users,
   CalendarDays,
@@ -12,9 +13,6 @@ import {
   Smile,
 } from "lucide-react";
 
-const STUDENTS_KEY = "studentsData";
-const CURRENT_SESSION_KEY = "currentCounselingSession";
-
 const EMOTION_COLORS = {
   Senang: "#22c55e",
   Sedih: "#2563eb",
@@ -23,152 +21,171 @@ const EMOTION_COLORS = {
   Netral: "#6b7280",
 };
 
-const SAMPLE_RECENT_SESSIONS = [
-  {
-    id: "KS-20240512-001",
-    studentName: "Andi Ramadhan",
-    nim: "2022573010105",
-    counselorName: "Hendrawaty, ST., MT",
-    startDate: "12 Mei 2024",
-    startTime: "10:00",
-    duration: "00:15:00",
-    status: "Selesai",
-  },
-  {
-    id: "KS-20240512-002",
-    studentName: "Siti Rahmawati",
-    nim: "2022573010112",
-    counselorName: "Hendrawaty, ST., MT",
-    startDate: "12 Mei 2024",
-    startTime: "09:30",
-    duration: "00:12:45",
-    status: "Berlangsung",
-  },
-  {
-    id: "KS-20240512-003",
-    studentName: "Muhammad Fikri",
-    nim: "2022573010118",
-    counselorName: "Azhar, ST., MT",
-    startDate: "12 Mei 2024",
-    startTime: "09:00",
-    duration: "00:16:20",
-    status: "Selesai",
-  },
-];
+const mapSessionFromApi = (session) => ({
+  id: session.id,
+  sessionId: session.session_code,
+  studentName: session.student_name || "-",
+  nim: session.student_nim || "-",
+  counselorName: "Konselor / Admin",
+  startDate: formatDateDisplay(session.scheduled_date),
+  startTime: session.scheduled_time || "-",
+  duration: session.actual_duration || session.estimated_duration || "-",
+  status: session.status || "Terjadwal",
+  createdAt: session.created_at,
+});
 
-const SAMPLE_EMOTION_DISTRIBUTION = [
-  { name: "Netral", value: 52.6, count: 1293 },
-  { name: "Senang", value: 20.4, count: 502 },
-  { name: "Sedih", value: 13.2, count: 324 },
-  { name: "Marah", value: 8.7, count: 214 },
-  { name: "Takut", value: 5.1, count: 124 },
-];
+const mapReportFromApi = (report) => {
+  const sessionInfo = report.sessionInfo || report.session_info || {};
+  const emotionSummary = parseJson(report.emotion_summary_json) || {};
 
-const SAMPLE_SCATTER_POINTS = [
-  { day: "6 Mei", emotion: "Marah" },
-  { day: "6 Mei", emotion: "Senang" },
-  { day: "6 Mei", emotion: "Takut" },
-  { day: "6 Mei", emotion: "Sedih" },
-  { day: "6 Mei", emotion: "Netral" },
-  { day: "7 Mei", emotion: "Marah" },
-  { day: "7 Mei", emotion: "Senang" },
-  { day: "7 Mei", emotion: "Takut" },
-  { day: "7 Mei", emotion: "Netral" },
-  { day: "8 Mei", emotion: "Senang" },
-  { day: "8 Mei", emotion: "Sedih" },
-  { day: "8 Mei", emotion: "Marah" },
-  { day: "8 Mei", emotion: "Takut" },
-  { day: "9 Mei", emotion: "Sedih" },
-  { day: "9 Mei", emotion: "Netral" },
-  { day: "9 Mei", emotion: "Senang" },
-  { day: "9 Mei", emotion: "Marah" },
-  { day: "10 Mei", emotion: "Sedih" },
-  { day: "10 Mei", emotion: "Takut" },
-  { day: "10 Mei", emotion: "Marah" },
-  { day: "10 Mei", emotion: "Senang" },
-  { day: "11 Mei", emotion: "Netral" },
-  { day: "11 Mei", emotion: "Sedih" },
-  { day: "11 Mei", emotion: "Takut" },
-  { day: "11 Mei", emotion: "Senang" },
-  { day: "12 Mei", emotion: "Netral" },
-  { day: "12 Mei", emotion: "Sedih" },
-  { day: "12 Mei", emotion: "Takut" },
-  { day: "12 Mei", emotion: "Marah" },
-];
+  return {
+    id: report.id,
+    reportId: report.reportId || report.report_code || `RPT-${String(report.id).padStart(4, "0")}`,
+
+    sessionId:
+      report.sessionId ||
+      report.session_code ||
+      report.session_id_code ||
+      sessionInfo.sessionId ||
+      sessionInfo.session_code ||
+      `KS-${String(report.session_id || report.id).padStart(4, "0")}`,
+
+    studentName:
+      sessionInfo.studentName ||
+      sessionInfo.student_name ||
+      report.studentName ||
+      report.student_name ||
+      "-",
+
+    nim:
+      sessionInfo.nim ||
+      sessionInfo.student_nim ||
+      report.nim ||
+      report.student_nim ||
+      "-",
+
+    counselorName:
+      sessionInfo.counselorName ||
+      sessionInfo.counselor_name ||
+      report.counselorName ||
+      report.counselor_name ||
+      "Konselor / Admin",
+
+    startDate: formatDateDisplay(
+      sessionInfo.startDate ||
+      sessionInfo.scheduled_date ||
+      report.scheduled_date ||
+      report.created_at ||
+      report.createdAt
+    ),
+
+    startTime:
+      sessionInfo.startTime ||
+      sessionInfo.scheduled_time ||
+      report.scheduled_time ||
+      "-",
+
+    duration:
+      report.duration ||
+      report.totalDuration ||
+      report.actual_duration ||
+      sessionInfo.duration ||
+      sessionInfo.actual_duration ||
+      "-",
+
+    status: "Selesai",
+
+    dominantEmotion:
+      report.dominantEmotion ||
+      report.dominant_emotion ||
+      "-",
+
+    counts:
+      report.counts ||
+      emotionSummary.counts ||
+      {},
+
+    percentages:
+      report.percentages ||
+      emotionSummary.percentages ||
+      {},
+
+    totalDetections:
+      report.totalDetections ||
+      report.total_detections ||
+      emotionSummary.total ||
+      0,
+
+    createdAt:
+      report.createdAt ||
+      report.created_at,
+
+    chartPoints:
+      report.chartPoints ||
+      report.chart_points ||
+      emotionSummary.chartPoints ||
+      emotionSummary.chart_points ||
+      [],
+  };
+};
 
 function DashboardPage() {
   const navigate = useNavigate();
 
-  const counselorProfile = safeParse(localStorage.getItem("serinUserProfile")) || {
-    name: "Admin Unit BK",
-  };
+  const counselorProfile =
+    safeParse(localStorage.getItem("serinUser")) ||
+    safeParse(localStorage.getItem("serinUserProfile")) ||
+    {
+      name: "Admin Unit BK",
+    };
 
   const counselorName = counselorProfile.name || "Admin Unit BK";
 
   const [students, setStudents] = useState([]);
+  const [sessions, setSessions] = useState([]);
   const [currentSession, setCurrentSession] = useState(null);
   const [reports, setReports] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const storedStudents = safeParse(localStorage.getItem(STUDENTS_KEY));
-    const storedCurrentSession = safeParse(
-      localStorage.getItem(CURRENT_SESSION_KEY)
-    );
+    const loadDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
 
-    setStudents(Array.isArray(storedStudents) ? storedStudents : []);
-    setCurrentSession(storedCurrentSession || null);
+        const [studentsData, sessionsData, reportsData] = await Promise.all([
+          studentApi.getAll(),
+          sessionApi.getAll(),
+          reportApi.getAll(),
+        ]);
 
-    const reportCandidates = [
-      "counselingReports",
-      "sessionReports",
-      "reportHistory",
-      "reportsData",
-      "reports",
-    ];
-
-    const collectedReports = [];
-
-    reportCandidates.forEach((key) => {
-      const value = safeParse(localStorage.getItem(key));
-
-      if (Array.isArray(value)) {
-        value.forEach((item) => collectedReports.push(item));
+        setStudents(Array.isArray(studentsData) ? studentsData : []);
+        setCurrentSession(null);
+        setSessions(Array.isArray(sessionsData) ? sessionsData.map(mapSessionFromApi) : []);
+        setReports(Array.isArray(reportsData) ? reportsData.map(mapReportFromApi) : []);
+      } catch (error) {
+        setErrorMessage(error.message || "Gagal memuat data dashboard.");
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
 
-    setReports(removeDuplicateReports(collectedReports));
+    loadDashboardData();
   }, []);
 
   const recentSessions = useMemo(() => {
-    const list = [];
-
-    if (currentSession) {
-      list.push(normalizeSession(currentSession, "Berlangsung"));
-    }
-
-    reports.forEach((report) => {
-      const normalized = normalizeSession(report, "Selesai");
-
-      if (normalized.studentName !== "-" || normalized.nim !== "-") {
-        list.push(normalized);
-      }
-    });
-
-    if (list.length === 0) return SAMPLE_RECENT_SESSIONS;
-
-    return removeDuplicateSessions(list).slice(0, 3);
-  }, [currentSession, reports]);
+    return [...sessions]
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+      .slice(0, 3);
+  }, [sessions]);
 
   const emotionDistribution = useMemo(() => {
-    const fromReports = buildEmotionDistribution(reports);
-
-    if (fromReports.length > 0) return fromReports;
-
-    return SAMPLE_EMOTION_DISTRIBUTION;
+    return buildEmotionDistribution(reports);
   }, [reports]);
 
   const dominantEmotion = useMemo(() => {
-    if (emotionDistribution.length === 0) return "Netral";
+    if (emotionDistribution.length === 0) return "-";
 
     return [...emotionDistribution].sort((a, b) => b.value - a.value)[0].name;
   }, [emotionDistribution]);
@@ -177,24 +194,28 @@ function DashboardPage() {
     return emotionDistribution.reduce((total, item) => total + item.count, 0);
   }, [emotionDistribution]);
 
+  const scatterPoints = useMemo(() => {
+    return reports
+      .flatMap((report) => {
+        const dateLabel = formatShortDate(report.createdAt || report.sessionInfo?.startDate);
+
+        return (report.chartPoints || []).slice(0, 8).map((point) => ({
+          day: dateLabel,
+          emotion: point.emotion,
+        }));
+      })
+      .slice(-35);
+  }, [reports]);
+
   const stats = useMemo(() => {
     return {
-      totalStudents: students.length || 86,
-      totalSessions:
-        recentSessions.length > 0 && !isUsingSampleSession(recentSessions)
-          ? recentSessions.length
-          : 32,
-      todaySessions: currentSession ? 1 : 3,
-      totalReports: reports.length || 27,
+      totalStudents: students.length,
+      totalSessions: sessions.length,
+      todaySessions: sessions.filter(isTodaySession).length,
+      totalReports: reports.length,
       dominantEmotion,
     };
-  }, [
-    students.length,
-    recentSessions,
-    currentSession,
-    reports.length,
-    dominantEmotion,
-  ]);
+  }, [students.length, sessions, reports.length, dominantEmotion]);
 
   const todayInfo = useMemo(() => {
     const now = new Date();
@@ -216,6 +237,17 @@ function DashboardPage() {
   return (
     <AppLayout title="Dashboard" subtitle="">
       <div className="space-y-5">
+        {errorMessage && (
+          <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+            {errorMessage}
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700">
+            Memuat data dashboard...
+          </div>
+        )}
         <section className="relative overflow-hidden rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_45px_rgba(15,23,42,0.06)]">
           <div className="pointer-events-none absolute -right-20 -top-24 h-60 w-60 rounded-full bg-sky-100/80 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full bg-[#EEF2FF]/80 blur-2xl" />
@@ -309,7 +341,7 @@ function DashboardPage() {
 
               <EmotionLegend />
 
-              <ScatterChart points={SAMPLE_SCATTER_POINTS} />
+              <ScatterChart points={scatterPoints} />
 
               <div className="mt-3 flex items-start gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/70 px-4 py-2.5">
                 <Info size={17} className="mt-0.5 shrink-0 text-[#5B4FE9]" />
@@ -341,9 +373,15 @@ function DashboardPage() {
               </div>
 
               <div className="mt-4">
-                {recentSessions.slice(0, 1).map((session) => (
-                  <RecentSessionCompactCard key={session.id} session={session} />
-                ))}
+                {recentSessions.length ? (
+                  recentSessions.slice(0, 1).map((session) => (
+                    <RecentSessionCompactCard key={session.id} session={session} />
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-8 text-center text-sm font-semibold text-slate-500">
+                    Belum ada sesi konseling.
+                  </div>
+                )}
               </div>
             </section>
           </div>
@@ -366,9 +404,15 @@ function DashboardPage() {
                 />
 
                 <div className="space-y-3">
-                  {emotionDistribution.map((item) => (
-                    <DistributionRow key={item.name} item={item} />
-                  ))}
+                  {emotionDistribution.length ? (
+                    emotionDistribution.map((item) => (
+                      <DistributionRow key={item.name} item={item} />
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm font-semibold text-slate-500">
+                      Belum ada data emosi.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -380,7 +424,7 @@ function DashboardPage() {
                 <div className="mt-3 flex items-center gap-3">
                   <div className="flex h-13 w-13 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-blue-100">
                     <img
-                      src={getEmotionIcon(dominantEmotion)}
+                      src={getEmotionIcon(dominantEmotion === "-" ? "Netral" : dominantEmotion)}
                       alt={dominantEmotion}
                       className="h-10 w-10 object-contain"
                     />
@@ -457,7 +501,9 @@ function EmotionLegend() {
 
 function ScatterChart({ points }) {
   const emotions = ["Senang", "Netral", "Takut", "Marah", "Sedih"];
-  const days = ["6 Mei", "7 Mei", "8 Mei", "9 Mei", "10 Mei", "11 Mei", "12 Mei"];
+  const days = [...new Set(points.map((point) => point.day))].slice(-7);
+
+  const safeDays = days.length ? days : ["-"];
 
   return (
     <div className="mt-4 rounded-2xl bg-white">
@@ -478,7 +524,7 @@ function ScatterChart({ points }) {
           </div>
 
           <div className="absolute inset-0 grid grid-cols-7">
-            {days.map((day) => (
+            {safeDays.map((day) => (
               <div
                 key={day}
                 className="border-l border-slate-100 first:border-l-0"
@@ -487,12 +533,15 @@ function ScatterChart({ points }) {
           </div>
 
           {points.map((point, index) => {
-            const xIndex = days.indexOf(point.day);
+            const xIndex = safeDays.indexOf(point.day);
             const yIndex = emotions.indexOf(point.emotion);
 
             if (xIndex === -1 || yIndex === -1) return null;
 
-            const left = `${(xIndex / (days.length - 1)) * 92 + 4}%`;
+            const left =
+              safeDays.length === 1
+                ? "50%"
+                : `${(xIndex / (safeDays.length - 1)) * 92 + 4}%`;
             const top = `${(yIndex / (emotions.length - 1)) * 82 + 8}%`;
 
             return (
@@ -512,7 +561,7 @@ function ScatterChart({ points }) {
       </div>
 
       <div className="ml-[70px] mt-2 grid grid-cols-7 text-center text-xs font-semibold text-slate-600">
-        {days.map((day) => (
+        {safeDays.map((day) => (
           <div key={day}>
             <p>{day}</p>
             <p className="text-slate-400">00:00</p>
@@ -696,6 +745,10 @@ function StatusBadge({ status }) {
 }
 
 function buildConicGradient(distribution) {
+  if (!distribution.length) {
+    return "conic-gradient(#e5e7eb 0% 100%)";
+  }
+
   let current = 0;
 
   const stops = distribution.map((item) => {
@@ -720,6 +773,7 @@ function buildEmotionDistribution(reports) {
 
   reports.forEach((report) => {
     const summary =
+      report.counts ||
       report.emotionSummary ||
       report.summary ||
       report.emotions ||
@@ -736,13 +790,6 @@ function buildEmotionDistribution(reports) {
 
       emotionCounts[emotion] += Number(value) || 0;
     });
-
-    if (
-      report.dominantEmotion &&
-      emotionCounts[report.dominantEmotion] !== undefined
-    ) {
-      emotionCounts[report.dominantEmotion] += 1;
-    }
   });
 
   const total = Object.values(emotionCounts).reduce(
@@ -766,64 +813,20 @@ function getDominantPercentage(distribution, dominantEmotion) {
   return item ? item.value : 0;
 }
 
-
-
-function normalizeSession(item, fallbackStatus = "Selesai") {
-  return {
-    id: item.sessionId || item.id || item.reportId || `KS-${Date.now()}`,
-    studentName:
-      item.studentName ||
-      item.student?.name ||
-      item.name ||
-      item.namaMahasiswa ||
-      "-",
-    nim: item.nim || item.student?.nim || "-",
-    counselorName: item.counselorName ||
-      item.counselor ||
-      item.namaKonselor ||
-      getCurrentCounselorName(),
-    startDate:
-      item.startDate ||
-      item.date ||
-      item.sessionDate ||
-      item.tanggal ||
-      formatDateDisplay(item.createdAt),
-    startTime:
-      item.startTime ||
-      item.time ||
-      item.sessionTime ||
-      item.waktu ||
-      formatTimeDisplay(item.createdAt),
-    duration: item.duration || item.sessionDuration || item.durasi || "00:00:00",
-    status:
-      item.status === "active" ? "Berlangsung" : item.status || fallbackStatus,
-  };
+function formatNumber(value) {
+  return new Intl.NumberFormat("id-ID").format(value || 0);
 }
 
-function removeDuplicateReports(items) {
-  const map = new Map();
+function getInitial(name) {
+  if (!name || name === "-") return "-";
 
-  items.forEach((item, index) => {
-    const key = item.reportId || item.id || item.sessionId || `report-${index}`;
-    if (!map.has(key)) map.set(key, item);
-  });
-
-  return Array.from(map.values());
-}
-
-function removeDuplicateSessions(items) {
-  const map = new Map();
-
-  items.forEach((item, index) => {
-    const key = item.id || item.sessionId || `session-${index}`;
-    if (!map.has(key)) map.set(key, item);
-  });
-
-  return Array.from(map.values());
-}
-
-function isUsingSampleSession(sessions) {
-  return sessions.some((session) => session.id === "KS-20240512-001");
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
 }
 
 function safeParse(value) {
@@ -834,10 +837,34 @@ function safeParse(value) {
   }
 }
 
-function getCurrentCounselorName() {
-  const profile = safeParse(localStorage.getItem("serinUserProfile"));
+function isTodaySession(session) {
+  const value = session?.createdAt || session?.startDate;
 
-  return profile?.name || "Admin Unit BK";
+  if (!value || value === "-") return false;
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return false;
+
+  const today = new Date();
+
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  );
+}
+
+function formatShortDate(value) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+  });
 }
 
 function formatDateDisplay(value) {
@@ -853,32 +880,16 @@ function formatDateDisplay(value) {
   });
 }
 
-function formatTimeDisplay(value) {
-  if (!value) return "-";
+function parseJson(value) {
+  if (!value) return null;
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
+  if (typeof value === "object") return value;
 
-  return date.toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatNumber(value) {
-  return new Intl.NumberFormat("id-ID").format(value || 0);
-}
-
-function getInitial(name) {
-  if (!name || name === "-") return "-";
-
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
 }
 
 export default DashboardPage;

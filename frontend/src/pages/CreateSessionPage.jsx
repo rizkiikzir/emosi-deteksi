@@ -25,7 +25,7 @@ const DEFAULT_FORM = {
   studentName: "",
   nim: "",
   programStudy: "",
-  counselorName: "Hendrawaty, ST., MT",
+  counselorName: "",
 
   title: "",
   counselingType: "Konseling Akademik",
@@ -90,12 +90,26 @@ const mapStudentFromApi = (student) => ({
 function CreateSessionPage() {
   const navigate = useNavigate();
 
+  const counselorProfile =
+    safeParse(localStorage.getItem("serinUser")) ||
+    safeParse(localStorage.getItem("serinUserProfile")) ||
+    {};
+
+  const counselorName = counselorProfile.name || "Konselor / Admin";
+
   const [step, setStep] = useState(1);
   const [students, setStudents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [studentKeyword, setStudentKeyword] = useState("");
   const [formData, setFormData] = useState(DEFAULT_FORM);
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      counselorName,
+    }));
+  }, [counselorName]);
 
   useEffect(() => {
     const loadStudents = async () => {
@@ -244,17 +258,13 @@ function CreateSessionPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const generateSessionId = () => {
-    return `KS-${Date.now().toString().slice(-8)}`;
-  };
-
   const handleStartMonitoring = async () => {
     try {
       setIsLoading(true);
 
       const payload = {
         student_id: Number(formData.studentId),
-        counselor_id: null,
+        counselor_id: counselorProfile.id || null,
 
         title: formData.title.trim(),
         counseling_type: formData.counselingType,
@@ -1059,6 +1069,14 @@ function getInitial(name) {
     .map((word) => word[0])
     .join("")
     .toUpperCase();
+}
+
+function safeParse(value) {
+  try {
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return null;
+  }
 }
 
 export default CreateSessionPage;

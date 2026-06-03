@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-
 class StudentBase(BaseModel):
     nim: str
     name: str
@@ -118,5 +117,48 @@ class SessionMarkerResponse(SessionMarkerCreate):
     id: int
     created_at: datetime
 
+class ReportCreate(BaseModel):
+    session_id: int
+
+
+class ReportResponse(BaseModel):
+    id: int
+    report_code: str
+    session_id: int
+
+    dominant_emotion: Optional[str] = None
+    dominant_percentage: Optional[float] = None
+    total_detections: int = 0
+
+    emotion_summary_json: Optional[str] = None
+    timeline_summary_json: Optional[str] = None
+
+    interpretation: Optional[str] = None
+    recommendation: Optional[str] = None
+
+    model_name: Optional[str] = "LightExNet V2"
+    model_accuracy: Optional[float] = None
+    pdf_url: Optional[str] = None
+
+    created_at: datetime
+    updated_at: datetime
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    unit: Optional[str] = None
+    status: Optional[str] = None
+    photo_url: Optional[str] = None
+
     class Config:
         from_attributes = True
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+class LoginRequest(BaseModel):
+    username: str
+    password: str
