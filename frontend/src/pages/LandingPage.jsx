@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import serinIcon from "../assets/serin-icon.png";
 import { getEmotionIcon } from "../utils/emotionIcons";
+import heroIllustration from "../assets/serin-hero-illustration.png";
 import {
   Activity,
   BarChart3,
@@ -31,7 +32,7 @@ function LandingPage() {
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-white text-slate-950">
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex h-[86px] max-w-[1500px] items-center justify-between px-8">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white ring-1 ring-indigo-100">
@@ -56,28 +57,28 @@ function LandingPage() {
             <button
               type="button"
               onClick={() => scrollToSection("beranda")}
-              className="text-[#5B4FE9]"
+              className="text-[var(--serin-primary)]"
             >
               Beranda
             </button>
             <button
               type="button"
               onClick={() => scrollToSection("tentang")}
-              className="transition hover:text-[#5B4FE9]"
+              className="transition hover:text-[var(--serin-primary)]"
             >
               Tentang Sistem
             </button>
             <button
               type="button"
               onClick={() => scrollToSection("fitur")}
-              className="transition hover:text-[#5B4FE9]"
+              className="transition hover:text-[var(--serin-primary)]"
             >
               Fitur
             </button>
             <button
               type="button"
               onClick={() => scrollToSection("kontak")}
-              className="transition hover:text-[#5B4FE9]"
+              className="transition hover:text-[var(--serin-primary)]"
             >
               Kontak
             </button>
@@ -86,7 +87,7 @@ function LandingPage() {
           <button
             type="button"
             onClick={() => navigate("/login")}
-            className="serin-primary-button flex h-12 items-center gap-3 rounded-2xl px-7 text-sm font-extrabold"
+            className="flex h-12 items-center gap-3 rounded-2xl px-7 text-sm font-extrabold text-white shadow-[var(--serin-shadow-primary)] transition hover:-translate-y-0.5 hover:brightness-105 [background:var(--serin-gradient)]"
           >
             <UserRound size={18} />
             Login Konselor
@@ -96,24 +97,29 @@ function LandingPage() {
 
       <section
         id="beranda"
-        className="relative overflow-hidden bg-gradient-to-br from-white via-[#EEF2FF]/45 to-[#E6FFFB]/35"
+        className="relative overflow-hidden bg-gradient-to-br from-white via-[var(--serin-primary-soft)]/45 to-[var(--serin-accent-soft)]/45"
       >
         <HeroDecorations />
 
-        <div className="mx-auto grid min-h-[calc(100vh-86px)] max-w-[1500px] grid-cols-1 items-center gap-10 px-10 pb-5 pt-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="mx-auto grid min-h-[calc(100vh-86px)] max-w-[1500px] grid-cols-1 items-center gap-12 px-8 py-12 lg:grid-cols-[0.9fr_1.1fr] lg:px-10">
           <div className="relative z-10 -mt-4">
-            <h2 className="max-w-[620px] text-[34px] font-extrabold leading-[1.15] tracking-tight text-slate-950">
-              Sistem Deteksi Emosi Wajah Real-Time untuk{" "}
-              <span className="bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] bg-clip-text text-transparent">
-                Pendampingan Konseling Mahasiswa
+
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--serin-primary-border)] bg-white/80 px-4 py-2 text-xs font-extrabold text-[var(--serin-primary)] shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-[var(--serin-accent)]" />
+              SERIN • Real-Time Emotion Monitoring
+            </div>
+
+            <h2 className="max-w-[680px] text-[38px] font-black leading-[1.08] tracking-[-0.035em] text-slate-950 md:text-[48px]">
+              SERIN untuk Monitoring Emosi{" "}
+              <span className="bg-gradient-to-r from-[var(--serin-primary)] via-[#2563eb] to-[var(--serin-accent)] bg-clip-text text-transparent">
+                Konseling Mahasiswa
               </span>
             </h2>
 
             <p className="mt-4 max-w-[600px] text-sm font-medium leading-7 text-slate-600">
-              Sistem berbasis Artificial Intelligence dengan arsitektur CNN
-              LightExNet yang mampu mendeteksi 5 emosi utama secara real-time
-              dan menyajikan analisis serta interpretasi untuk mendukung
-              konselor dalam memahami kondisi emosional mahasiswa.
+              SERIN membantu konselor memantau ekspresi emosi mahasiswa selama sesi
+              konseling melalui deteksi wajah real-time, grafik sebaran emosi,
+              marker momen penting, serta laporan otomatis berbasis data.
             </p>
 
             <EmotionCards />
@@ -125,7 +131,7 @@ function LandingPage() {
                 className="serin-primary-button flex h-12 items-center gap-3 rounded-2xl px-8 text-sm font-extrabold"
               >
                 <Play size={17} />
-                Mulai Sesi Konseling
+                Masuk Dashboard Konselor
               </button>
 
               <button
@@ -139,20 +145,29 @@ function LandingPage() {
             </div>
           </div>
 
-          <HeroMockup />
+          <HeroIllustration />
         </div>
       </section>
 
-      <section id="fitur" className="bg-white px-10 py-8">
+      <section id="fitur" className="bg-white px-8 py-16 lg:px-10">
         <div className="mx-auto max-w-[1500px]">
-          <div className="text-center">
-            <h2 className="text-2xl font-extrabold text-slate-950">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="inline-flex rounded-full border border-[var(--serin-primary-border)] bg-[var(--serin-primary-soft)] px-4 py-2 text-xs font-extrabold uppercase tracking-wide text-[var(--serin-primary)]">
+              Fitur SERIN
+            </span>
+
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-950">
               Fitur Utama Sistem
             </h2>
-            <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6]" />
+
+            <p className="mt-3 text-sm font-semibold leading-7 text-slate-500">
+              SERIN membantu proses konseling mulai dari pemantauan emosi real-time,
+              pencatatan momen penting, hingga pembuatan laporan otomatis.
+            </p>
+            <div className="mx-auto mt-3 h-1 w-16 rounded-full [background:var(--serin-gradient)]" />
           </div>
 
-          <div className="mt-9 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
             <FeatureCard
               icon={<Activity size={28} />}
               title="Deteksi Real-Time"
@@ -170,8 +185,8 @@ function LandingPage() {
             />
             <FeatureCard
               icon={<ShieldCheck size={28} />}
-              title="Aman & Terpercaya"
-              description="Data sesi konseling tersimpan dengan aman dan hanya dapat diakses oleh pihak yang berwenang."
+              title="Data Tersimpan"
+              description="Data mahasiswa, sesi, hasil deteksi, marker, dan laporan tersimpan di database sistem."
             />
             <FeatureCard
               icon={<Monitor size={28} />}
@@ -184,17 +199,17 @@ function LandingPage() {
 
       <section
         id="tentang"
-        className="bg-gradient-to-br from-white via-[#EEF2FF]/45 to-[#E6FFFB]/35 px-10 py-14"
+        className="bg-gradient-to-br from-white via-[var(--serin-primary-soft)]/45 to-[var(--serin-accent-soft)]/45 px-8 py-16 lg:px-10"
       >
         <div className="mx-auto grid max-w-[1500px] gap-10 lg:grid-cols-[0.88fr_1.12fr]">
           <div>
-            <span className="inline-flex rounded-full border border-[#DBE1FF] bg-white px-5 py-2 text-xs font-extrabold uppercase tracking-wide text-[#5B4FE9] shadow-sm">
+            <span className="inline-flex rounded-full border border-[var(--serin-primary-border)] bg-white px-5 py-2 text-xs font-extrabold uppercase tracking-wide text-[var(--serin-primary)] shadow-sm">
               Tentang Sistem
             </span>
 
-            <h2 className="mt-6 max-w-[650px] text-[38px] font-extrabold leading-[1.16] tracking-tight text-slate-950">
+            <h2 className="mt-6 max-w-[650px] text-[36px] font-black leading-[1.12] tracking-[-0.03em] text-slate-950">
               Apa itu Sistem Deteksi Emosi Wajah{" "}
-              <span className="bg-gradient-to-r from-[#5B4FE9] to-[#14B8A6] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[var(--serin-primary)] via-[#2563eb] to-[var(--serin-accent)] bg-clip-text text-transparent">
                 Real-Time?
               </span>
             </h2>
@@ -243,159 +258,17 @@ function LandingPage() {
   );
 }
 
-function HeroMockup() {
+function HeroIllustration() {
   return (
     <div className="relative z-10 -mt-2">
-      <div className="rounded-[28px] border border-slate-200/80 bg-white shadow-[0_28px_70px_rgba(15,23,42,0.10)]">
-        <div className="flex h-9 items-center gap-2 border-b border-slate-200 px-5">
-          <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-          <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-          <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-        </div>
+      <div className="absolute -inset-6 rounded-[36px] bg-[var(--serin-gradient-soft)] blur-2xl" />
 
-        <div className="p-4">
-          <h3 className="text-sm font-extrabold text-slate-950">
-            Monitoring Emosi Real-Time
-          </h3>
-
-          <div className="mt-3 grid gap-3 lg:grid-cols-[220px_105px_1fr]">
-            <div className="rounded-xl bg-slate-100 p-2.5">
-              <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-slate-200">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-emerald-100">
-                  <img
-                    src={getEmotionIcon("Senang")}
-                    alt="Senang"
-                    className="h-10 w-10 object-contain"
-                  />
-                </div>
-                <div className="absolute inset-10 rounded-xl border-2 border-emerald-500" />
-              </div>
-
-              <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-                <span className="text-emerald-600">● Deteksi Berjalan</span>
-                <span className="text-slate-500">FPS: 24.3</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 p-4 text-center">
-              <p className="text-xs font-bold text-slate-500">
-                Emosi Saat Ini
-              </p>
-              <div className="mx-auto mt-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-emerald-100">
-                <img
-                  src={getEmotionIcon("Senang")}
-                  alt="Senang"
-                  className="h-10 w-10 object-contain"
-                />
-              </div>
-              <h4 className="mt-2 text-lg font-extrabold text-emerald-700">
-                Senang
-              </h4>
-              <p className="mt-4 text-xs font-bold text-slate-500">
-                Confidence
-              </p>
-              <p className="text-2xl font-extrabold text-emerald-600">
-                87.3%
-              </p>
-              <div className="mt-2 h-2 rounded-full bg-slate-100">
-                <div className="h-2 w-[87%] rounded-full bg-emerald-500" />
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 p-4">
-              <h4 className="text-sm font-extrabold text-slate-950">
-                Grafik Sebaran Emosi (Real-Time)
-              </h4>
-              <FakeScatter />
-            </div>
-          </div>
-
-          <div className="mt-3 rounded-xl border border-slate-200 p-3">
-            <p className="mb-3 text-sm font-extrabold text-slate-950">
-              Ringkasan Sesi
-            </p>
-            <div className="grid gap-4 text-xs font-semibold text-slate-600 md:grid-cols-4">
-              <SummaryMini
-                icon={<UserRound size={16} />}
-                label="Mahasiswa"
-                value="Muhammad Rizki"
-              />
-              <SummaryMini
-                icon={<Users size={16} />}
-                label="Konselor"
-                value="Hendrawaty, ST., MT"
-              />
-              <SummaryMini
-                icon={<Activity size={16} />}
-                label="Durasi"
-                value="00:15:00"
-              />
-              <SummaryMini
-                icon={<Camera size={16} />}
-                label="Waktu"
-                value="12 Mei 2024"
-              />
-            </div>
-          </div>
-
-          <div className="mt-3 flex items-center gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-2.5 text-xs font-semibold text-[#4338CA]">
-            <Info size={15} />
-            Sistem mendeteksi dan menganalisis emosi secara real-time.
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FakeScatter() {
-  const points = [
-    ["10%", "78%", "bg-emerald-500"],
-    ["28%", "68%", "bg-slate-400"],
-    ["42%", "45%", "bg-yellow-500"],
-    ["52%", "31%", "bg-red-500"],
-    ["61%", "88%", "bg-emerald-500"],
-    ["74%", "20%", "bg-blue-500"],
-    ["84%", "62%", "bg-yellow-500"],
-    ["90%", "38%", "bg-red-500"],
-  ];
-
-  return (
-    <div className="relative mt-3 h-44 rounded-xl bg-white">
-      <div className="absolute inset-0 grid grid-cols-6 grid-rows-5">
-        {Array.from({ length: 30 }).map((_, index) => (
-          <div key={index} className="border border-slate-100" />
-        ))}
-      </div>
-
-      <div className="absolute left-0 top-2 text-[10px] font-semibold text-slate-500">
-        Senang
-      </div>
-      <div className="absolute left-0 top-[42%] text-[10px] font-semibold text-slate-500">
-        Takut
-      </div>
-      <div className="absolute bottom-1 left-0 text-[10px] font-semibold text-slate-500">
-        Sedih
-      </div>
-
-      {points.map(([left, top, color], index) => (
-        <span
-          key={index}
-          className={`absolute h-2.5 w-2.5 rounded-full ${color}`}
-          style={{ left, top }}
+      <div className="relative mx-auto max-w-[760px] overflow-hidden rounded-[32px] border border-slate-200/80 bg-white p-3 shadow-[0_28px_70px_rgba(15,23,42,0.12)]">
+        <img
+          src={heroIllustration}
+          alt="Ilustrasi SERIN untuk monitoring emosi konseling mahasiswa"
+          className="w-full rounded-[24px] object-cover"
         />
-      ))}
-    </div>
-  );
-}
-
-function SummaryMini({ icon, label, value }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[#5B4FE9]">{icon}</span>
-      <div>
-        <p className="text-slate-400">{label}</p>
-        <p className="truncate font-extrabold text-slate-700">{value}</p>
       </div>
     </div>
   );
@@ -403,8 +276,8 @@ function SummaryMini({ icon, label, value }) {
 
 function FeatureCard({ icon, title, description }) {
   return (
-    <div className="group rounded-[24px] border border-slate-200/80 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:border-indigo-100 hover:shadow-[0_24px_60px_rgba(15,23,42,0.10)]">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#EEF2FF] to-[#E6FFFB] text-[#5B4FE9] ring-1 ring-indigo-100 transition group-hover:text-[#14B8A6]">
+    <div className="group rounded-[28px] border border-slate-200/80 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.055)] transition hover:-translate-y-1 hover:border-[var(--serin-primary-border)] hover:shadow-[0_24px_60px_rgba(15,23,42,0.09)]">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--serin-primary-soft)] to-[var(--serin-accent-soft)] text-[var(--serin-primary)] ring-1 ring-[var(--serin-primary-border)] transition group-hover:text-[var(--serin-accent-dark)]">
         {icon}
       </div>
 
@@ -420,78 +293,89 @@ function FeatureCard({ icon, title, description }) {
 }
 
 function InfoVisual() {
+  const insights = [
+    {
+      title: "Deteksi Real-Time",
+      value: "5 Emosi",
+      desc: "Senang, Sedih, Marah, Takut, dan Netral.",
+      icon: <Camera size={24} />,
+    },
+    {
+      title: "Marker Sesi",
+      value: "Momen Penting",
+      desc: "Konselor dapat menandai titik penting selama sesi.",
+      icon: <Activity size={24} />,
+    },
+    {
+      title: "Laporan Otomatis",
+      value: "PDF Report",
+      desc: "Ringkasan emosi, grafik, interpretasi, dan rekomendasi.",
+      icon: <FileText size={24} />,
+    },
+  ];
+
   return (
     <div className="relative flex items-center justify-center">
-      <div className="absolute h-[360px] w-[360px] rounded-full bg-[#E6FFFB]/70 blur-2xl" />
+      <div className="absolute h-[380px] w-[380px] rounded-full bg-[var(--serin-gradient-soft)] blur-3xl" />
 
-      <div className="relative w-full max-w-[680px]">
-        <div className="mx-auto rounded-[28px] border border-slate-300 bg-slate-900 p-3 shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
-          <div className="rounded-2xl bg-white p-5">
-            <div className="grid grid-cols-[120px_1fr] overflow-hidden rounded-xl border border-slate-200">
-              <div className="bg-slate-900 p-4 text-white">
-                <p className="text-xs font-extrabold">SERIN</p>
-                {[
-                  "Dashboard",
-                  "Sesi Konseling",
-                  "Monitoring",
-                  "Laporan",
-                  "Riwayat",
-                ].map((item) => (
-                  <p
-                    key={item}
-                    className="mt-4 text-[11px] font-semibold text-slate-300"
-                  >
-                    {item}
-                  </p>
-                ))}
-              </div>
+      <div className="relative w-full max-w-[660px] rounded-[32px] border border-slate-200/80 bg-white p-6 shadow-[0_28px_70px_rgba(15,23,42,0.10)]">
+        <div className="flex items-start justify-between gap-5 border-b border-slate-100 pb-5">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-wide text-[var(--serin-primary)]">
+              SERIN Insight
+            </p>
+            <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
+              Dari Deteksi Emosi ke Laporan Konseling
+            </h3>
+            <p className="mt-3 max-w-[520px] text-sm font-semibold leading-7 text-slate-500">
+              SERIN membantu mengubah hasil deteksi wajah selama sesi menjadi
+              data pendukung yang mudah dibaca oleh konselor.
+            </p>
+          </div>
 
-              <div className="p-5">
-                <h3 className="text-sm font-extrabold text-slate-950">
-                  Grafik Sebaran Emosi
-                </h3>
-                <FakeScatter />
-              </div>
-            </div>
+          <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--serin-primary-soft)] to-[var(--serin-accent-soft)] text-[var(--serin-primary)] ring-1 ring-[var(--serin-primary-border)] md:flex">
+            <Brain size={28} />
           </div>
         </div>
 
-        <FloatingInfo
-          icon={<LineChart size={34} />}
-          title="Analisis"
-          sub="Objektif"
-          top="0"
-          right="0"
-        />
-        <FloatingInfo
-          icon={<Lock size={30} />}
-          title="Data Aman"
-          sub="& Terpercaya"
-          top="120px"
-          right="-10px"
-        />
-        <FloatingInfo
-          icon={<Users size={32} />}
-          title="Pendukung"
-          sub="Keputusan Konselor"
-          top="250px"
-          right="0"
-        />
-      </div>
-    </div>
-  );
-}
+        <div className="mt-6 grid gap-4">
+          {insights.map((item, index) => (
+            <div
+              key={item.title}
+              className="group flex items-center gap-4 rounded-[22px] border border-slate-200/80 bg-slate-50/70 p-4 transition hover:-translate-y-0.5 hover:border-[var(--serin-primary-border)] hover:bg-white hover:shadow-[0_16px_36px_rgba(15,23,42,0.07)]"
+            >
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-[var(--serin-primary)] shadow-sm ring-1 ring-slate-200">
+                {item.icon}
+              </div>
 
-function FloatingInfo({ icon, title, sub, top, right }) {
-  return (
-    <div
-      className="absolute hidden items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-5 py-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] xl:flex"
-      style={{ top, right }}
-    >
-      <div className="text-[#5B4FE9]">{icon}</div>
-      <div>
-        <p className="text-sm font-extrabold text-slate-950">{title}</p>
-        <p className="text-sm font-semibold text-slate-700">{sub}</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--serin-primary-soft)] text-xs font-black text-[var(--serin-primary)]">
+                    {index + 1}
+                  </span>
+                  <h4 className="text-sm font-extrabold text-slate-950">
+                    {item.title}
+                  </h4>
+                </div>
+                <p className="mt-1 text-xs font-semibold leading-6 text-slate-500">
+                  {item.desc}
+                </p>
+              </div>
+
+              <div className="hidden rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-800 shadow-sm sm:block">
+                {item.value}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 rounded-[22px] border border-[var(--serin-primary-border)] bg-[var(--serin-primary-soft)]/70 p-4">
+          <p className="text-sm font-semibold leading-7 text-slate-600">
+            <b className="text-[var(--serin-primary)]">Output utama:</b>{" "}
+            grafik sebaran emosi, distribusi emosi, marker momen penting,
+            interpretasi otomatis, dan laporan konseling berbentuk PDF.
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -536,13 +420,13 @@ function HowItWorks() {
         {steps.map(([title, desc, icon], index) => (
           <div
             key={title}
-            className="group relative rounded-[22px] border border-slate-200/80 bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:border-indigo-100 hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
+            className="group relative rounded-[24px] border border-slate-200/80 bg-white p-5 text-center shadow-[0_10px_28px_rgba(15,23,42,0.04)] transition hover:-translate-y-1 hover:border-[var(--serin-primary-border)] hover:shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
           >
-            <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-[#DBE1FF] bg-[#EEF2FF] text-xs font-extrabold text-[#5B4FE9]">
+            <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full border border-[var(--serin-primary-border)] bg-[var(--serin-primary-soft)] text-xs font-extrabold text-[var(--serin-primary)]">
               {index + 1}
             </span>
 
-            <div className="mx-auto mt-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#EEF2FF] to-[#E6FFFB] text-[#5B4FE9] ring-1 ring-indigo-100 transition group-hover:text-[#14B8A6]">
+            <div className="mx-auto mt-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--serin-primary-soft)] to-[var(--serin-accent-soft)] text-[var(--serin-primary)] ring-1 ring-[var(--serin-primary-border)] transition group-hover:text-[var(--serin-accent-dark)]">
               {icon}
             </div>
 
@@ -580,9 +464,9 @@ function ArchitectureCard() {
       </div>
 
       <div className="mt-7 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 text-sm font-medium leading-6 text-slate-600">
-        <b className="text-[#4338CA]">Info:</b> LightExNet dirancang agar mampu
-        berjalan real-time dengan akurasi tinggi namun tetap ringan untuk
-        perangkat standar.
+        <b className="text-[#4338CA]">Info:</b> Model LightExNet digunakan untuk
+        mendukung proses klasifikasi emosi wajah secara real-time pada sistem
+        konseling mahasiswa.
       </div>
     </div>
   );
@@ -591,7 +475,7 @@ function ArchitectureCard() {
 function ArchItem({ icon, label }) {
   return (
     <div>
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#EEF2FF] to-[#E6FFFB] text-[#5B4FE9] ring-1 ring-indigo-100">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--serin-primary-soft)] to-[var(--serin-accent-soft)] text-[var(--serin-primary)] ring-1 ring-[var(--serin-primary-border)]">
         {icon}
       </div>
       <p className="mt-3 text-xs font-bold leading-5 text-slate-700">
@@ -612,9 +496,9 @@ function EmotionCards({ compact = false }) {
       {emotions.map((label) => (
         <div
           key={label}
-          className="flex h-20 flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-[0_12px_28px_rgba(15,23,42,0.07)]"
+          className="flex h-20 flex-col items-center justify-center rounded-[20px] border border-slate-200/80 bg-white/90 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-[0_18px_36px_rgba(15,23,42,0.08)]"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-white to-slate-50 shadow-sm ring-1 ring-slate-100">
             <img
               src={getEmotionIcon(label)}
               alt={label}
@@ -634,15 +518,15 @@ function EmotionCards({ compact = false }) {
 function HeroDecorations() {
   return (
     <>
-      <div className="absolute -bottom-28 -left-24 h-72 w-72 rounded-full bg-[#EEF2FF]/80" />
-      <div className="absolute -right-24 top-8 h-72 w-72 rounded-full bg-[#E6FFFB]/70" />
-      <div className="absolute bottom-0 left-0 h-32 w-[520px] rounded-[50%] border-t border-[#14B8A6]/25" />
-      <div className="absolute bottom-6 left-20 h-28 w-[520px] rounded-[50%] border-t border-[#5B4FE9]/20" />
+      <div className="absolute -bottom-28 -left-24 h-72 w-72 rounded-full bg-[var(--serin-primary-soft)]/80" />
+      <div className="absolute -right-24 top-8 h-72 w-72 rounded-full bg-[var(--serin-accent-soft)]/70" />
+      <div className="absolute bottom-0 left-0 h-32 w-[520px] rounded-[50%] border-t border-[var(--serin-accent)]/25" />
+      <div className="absolute bottom-6 left-20 h-28 w-[520px] rounded-[50%] border-t border-[var(--serin-primary)]/20" />
       <div className="absolute right-[52%] top-56 grid grid-cols-7 gap-2 opacity-25">
         {Array.from({ length: 49 }).map((_, index) => (
           <span
             key={index}
-            className="h-1.5 w-1.5 rounded-full bg-[#5B4FE9]/35"
+            className="h-1.5 w-1.5 rounded-full bg-[var(--serin-primary)]/35"
           />
         ))}
       </div>
